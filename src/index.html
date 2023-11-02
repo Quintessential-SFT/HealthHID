@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#fafafa">
+        <script src="./hid.js"></script>
+        <script src="./bpm.js"></script>
+        <title>Designated HID Test Site</title>
+        <script>
+            const handleConnectedDevice = (e) => console.log(`Device connected: ${getDeviceHumanName(e.device)}`);
+            const handleDisconnectedDevice = (e) => {
+                console.log(`Device disconnected: ${getDeviceHumanName(e.device)}`);
+                _device = null;
+            };
+
+            navigator.hid.addEventListener("connect", handleConnectedDevice);
+            navigator.hid.addEventListener("disconnect", handleDisconnectedDevice);
+
+            hid.deviceResponseValidator = bpm.deviceResponseValidator;
+
+            const getInputData = () => document.getElementById("input").value;
+            const setOutputData = (data) => document.getElementById("output").value = data;
+
+            bpm.setOutputHandler((data) => {
+                setOutputData(data);
+            });
+
+            const getId = async () => {
+                await bpm.cmd.getUserId();
+            };
+            const setId = async () => {
+                const id = getInputData();
+                await bpm.cmd.setUserId(parseInt(id));
+            };
+        </script>
+    </head>
+    <body>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>Designated HID Test Site</h2>
+        <div>
+            <button onclick="hid.requestDevice()">
+                Select Device
+            </button>
+            <button onclick="hid.closeDevice()">
+                Close Device
+            </button>
+        </div>
+        </div>
+        <hr />
+        <div style="display: flex; flex-direction: column; margin-bottom: 0.5rem;">
+            <div>Input:</div>
+            <textarea id="input" style="resize: none; height: 50px"></textarea>
+        </div>
+        <div style="margin-bottom: 0.5rem;">
+            <button onclick="getId()">
+                Get ID
+            </button>
+            <button onclick="setId()">
+                Set ID
+            </button>
+        </div>
+        <div style="display: flex; flex-direction: column;">
+            <div>Output:</div>
+            <textarea id="output" disabled style="resize: none; height: 50px"></textarea>
+        </div>
+    </body>
+</html>
