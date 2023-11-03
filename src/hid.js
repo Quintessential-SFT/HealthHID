@@ -12,8 +12,8 @@ const getDeviceHumanName = (dev) => Array.from(supportedDevices.entries())
 const hid = {
   device: null,
   outputReportId: null,
-  ongoingRequest: null, // timeout, resHandler, retriesLeft
-  deviceResponseValidator: (data) => {},
+  ongoingRequest: null, // onRetryTimeout, onEndTimeout, readDataChunk, resHandler, retriesLeft, readData, isReading, retry
+  parseResponse: (data) => {},
 
   requestDevice: async () => {
     await hid.closeDevice();
@@ -22,20 +22,31 @@ const hid = {
     hid.device = devices[0]; // grab first interface
     await hid.device.open();
     hid.device.oninputreport = async (e) => {
-      if (hid.ongoingRequest) {
-        const data = new Uint8Array(e.data.buffer);
-        try {
-          // TODO: re-enable validation
-          // hid.deviceResponseValidator(data);
-        } catch {
-          return;
-        }
-        const resHandler = hid.ongoingRequest.resHandler;
-        hid.clearOngoingRequest();
-        console.log(`Read: ${arrDecToHex(data)}`);
-        // await resHandler(data);
-        console.log(`Read Fake: ${arrDecToHex(fakeData)}`);
-        await resHandler(fakeData);
+      clearTimeout(hid.ongoingRequest.onRetryTimeout);
+      if (!hid.ongoingRequest.readData) {
+        hid.ongoingRequest.readData = new Uint8Array([]);
+      }
+      const data = new Uint8Array(e.data.buffer);
+      try {
+        console.log('Read (Chunk): ', arrDecToHex(data));
+        hid.ongoingRequest.readDataChunk(
+          (chunkData) => hid.ongoingRequest.readData = new Uint8Array([...hid.ongoingRequest.readData, ...chunkData]),
+          data,
+          () => {
+            hid.ongoingRequest.isReading = true;
+            clearTimeout(hid.ongoingRequest.onEndTimeout);
+            hid.ongoingRequest.onEndTimeout = setTimeout(async () => {
+              hid.ongoingRequest.isReading = false;
+              const parsedData = hid.parseResponse(hid.ongoingRequest.readData);
+              const resHandler = hid.ongoingRequest.resHandler;
+              hid.clearOngoingRequest();
+              console.log(`Read: ${arrDecToHex(parsedData)}`);
+              await resHandler(parsedData);
+            }, 100);
+          },
+        );
+      } catch {
+        await hid.ongoingRequest.retry();
       }
     };
     console.log(`Opened device: ${getDeviceHumanName(hid.device)}`);
@@ -48,7 +59,7 @@ const hid = {
     }
   },
 
-  sendReport: async (reportId, data, resHandler) => {
+  sendReport: async (reportId, data, readDataChunk, resHandler) => {
     if (!hid.device) {
       window.alert('No device selected...');
       return;
@@ -57,24 +68,33 @@ const hid = {
       hid.clearOngoingRequest();
     }
     hid.ongoingRequest = {
+      readDataChunk,
       resHandler,
       retriesLeft: MAX_RETRIES,
     };
-    hid.ongoingRequest.timeout = setTimeout(() => hid._sendReport(reportId, data), RETRY_INTERVAL_MS);
     console.log(`Write: ${arrDecToHex(data)}`);
-  },
-
-  _sendReport: async (reportId, data) => {
-    if (!hid.ongoingRequest) return;
-    await hid.device.sendReport(reportId, data)
-      .catch(err => console.error(err));
-    if (--hid.ongoingRequest.retriesLeft > 0) {
-      setTimeout(() => hid._sendReport(reportId, data), RETRY_INTERVAL_MS);
+    const _sendReport = async () => {
+      if (!hid.ongoingRequest) return;
+      if (hid.ongoingRequest.retriesLeft-- > 0) {
+        await hid.device.sendReport(reportId, data)
+          .then(() => (
+            // Timeout is shifted on response
+            hid.ongoingRequest.onRetryTimeout = setTimeout(() => {
+               _sendReport();
+            }, RETRY_INTERVAL_MS)
+          ))
+          .catch(err => console.error(err));
+      } else {
+        hid.clearOngoingRequest();
+      }
     }
+    hid.ongoingRequest.retry = _sendReport;
+    await _sendReport();
   },
 
   clearOngoingRequest: () => {
-    clearTimeout(hid.ongoingRequest.timeout);
+    clearTimeout(hid.ongoingRequest.onRetryTimeout);
+    clearTimeout(hid.ongoingRequest.onEndTimeout);
     hid.ongoingRequest = null;
   },
 };

@@ -9,6 +9,13 @@ const bpm = {
     return new Uint8Array([data.length, ...data]);
   },
 
+  readDataChunk: (appendData, chunk, onInput) => {
+    onInput();
+    const data = chunk.slice(1, (chunk[0] & 15) + 1);
+    console.log(`Read (BPM Chunk): ${arrDecToHex(data)}`);
+    appendData(data);
+  },
+
   out: (data) => {
     console.log(data);
   },
@@ -19,23 +26,28 @@ const bpm = {
     };
   },
 
-  deviceResponseValidator: (data) => {
+  parseResponse: (data) => {
     if (data.length <= 3 || data[0] != 6) {
       throw new Error("Unexpected response");
     }
-    // TODO: Validate checksum
-    // cksum = sum(response[1:len(response)-2]) % 256
-    //         if '%2.2X' % cksum == response[-2:].decode():
-    //             return response[1:-2] # strip first byte and checksum
-    //         self.prnt('checksum mismatch: computed %s, expected %s.' %
-    //                   ('%2.2X' % cksum, response[-2:].decode()),
-    //                   file=sys.stderr)
+    const checksum = data.slice(1, data.length - 2).reduce((acc, v) => acc + v, 0) % 256;
+    const checksumHex = checksum.toString(16).padStart(2, '0').toUpperCase();
+    const expectedChecksum = data.slice(-2).map(byte => String.fromCharCode(byte)).join('');
+    if (checksumHex !== expectedChecksum) {
+      throw new Error(`Checksum mismatch: computed ${checksumHex}, expected ${expectedChecksum}.`);
+    }
+    return data.slice(1, -2);
   },
 
   cmd: {
     getUserId: async () => {
       const reqData = bpm.formatWriteData([0x12, 0x16, 0x18, 0x24]);
-      hid.sendReport(bpm.REPORT_ID, reqData, bpm.res.getUserId);
+      hid.sendReport(
+        bpm.REPORT_ID,
+        reqData,
+        bpm.readDataChunk,
+        bpm.res.getUserId,
+      );
     },
   
     setUserId: async (userId) => {
@@ -43,7 +55,12 @@ const bpm = {
         throw new Error(`Max ID length (${bpm.ID_LENGTH}) exceeded!`);
       }
       const reqData = bpm.formatWriteData([0x12, 0x16, 0x18, 0x23]);
-      hid.sendReport(bpm.REPORT_ID, reqData, bpm.res.setUserId);
+      hid.sendReport(
+        bpm.REPORT_ID,
+        reqData,
+        bpm.readDataChunk,
+        bpm.res.setUserId,
+      );
     },
 
     getDeviceInfo: async () => {
@@ -77,18 +94,28 @@ const bpm = {
 
   res: {
     getUserId: async (data) => {
-      data = data.slice(0, bpm.ID_LENGTH);
-      let id = '';
-      try {
-        for (let i = 0; i < data.length; i++) {
-          const char = String.fromCodePoint(data[i]);
-          if (char < ' ' || char > '~' || !/^[0-9a-zA-Z]+$/.test(char)) {
+      const decode = (data) => {
+        data = data.slice(0, -8); // rm fixed str
+        data = data.slice(0, 2 * bpm.ID_LENGTH);
+        let id = '';
+        for (let i = 0; i < data.length; i += 2) {
+          let char = '';
+          if (data[i] === 0x34) {
+            char = String.fromCodePoint(data[i + 1] + 10);
+          } else if (data[i] === 0x33) {
+            char = String.fromCodePoint(data[i + 1]);
+          } else {
             break;
+          }
+          if (char < ' ' || char > '~' || !/^[0-9a-zA-Z]+$/.test(char)) {
+            continue;
           }
           id += char;
         }
-      } catch {}
-      bpm.out(id);
+        return id;
+      };
+      const userId = decode(data);
+      bpm.out(userId);
     },
 
     setUserId: async (data) => {

@@ -17,7 +17,7 @@
             navigator.hid.addEventListener("connect", handleConnectedDevice);
             navigator.hid.addEventListener("disconnect", handleDisconnectedDevice);
 
-            hid.deviceResponseValidator = bpm.deviceResponseValidator;
+            hid.parseResponse = bpm.parseResponse;
 
             const getInputData = () => document.getElementById("input").value;
             const setOutputData = (data) => document.getElementById("output").value = data;
