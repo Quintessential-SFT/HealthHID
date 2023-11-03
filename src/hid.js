@@ -33,7 +33,9 @@ const hid = {
         const resHandler = hid.ongoingRequest.resHandler;
         hid.clearOngoingRequest();
         console.log(`Read: ${arrDecToHex(data)}`);
-        await resHandler(data);
+        // await resHandler(data);
+        console.log(`Read Fake: ${arrDecToHex(fakeData)}`);
+        await resHandler(fakeData);
       }
     };
     console.log(`Opened device: ${getDeviceHumanName(hid.device)}`);
@@ -83,25 +85,4 @@ const arrDecToHex = (decArray) => {
   const hexData = [];
   decArray.forEach(d => hexData.push(decToHex(d)));
   return hexData;
-};
-
-const decode_hexdigit = (byte) => {
-  if (byte >= 48 && byte <= 57) { // '0' to '9' in ASCII
-    return byte - 48;
-  } else if (byte >= 65 && byte <= 70) { // 'A' to 'F' in ASCII
-    return byte - 65 + 10;
-  } else if (byte >= 97 && byte <= 102) { // 'a' to 'f' in ASCII
-    return byte - 97 + 10;
-  }
-  console.log(byte)
-  throw new Error("Not a hex digit");
-};
-
-const decode_hexnum = (bytes) => {
-  let word = 0;
-  for (const b of bytes) {
-    word *= 16;
-    word += decode_hexdigit(b);
-  }
-  return word;
 };

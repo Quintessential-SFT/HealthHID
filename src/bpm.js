@@ -77,20 +77,18 @@ const bpm = {
 
   res: {
     getUserId: async (data) => {
-      const bytes = data.slice(0, 2 * bpm.ID_LENGTH);
+      data = data.slice(0, bpm.ID_LENGTH);
       let id = '';
       try {
-        for (const i = 0; i < bytes.length; i += 2) {
-          const charCode = decode_hexnum(bytes.slice(i, i + 2));
-          const char = String.fromCodePoint(charCode);
-          if (char < ' ' || charCode > '~' || !/^[0-9a-zA-Z]+$/.test(char)) {
+        for (let i = 0; i < data.length; i++) {
+          const char = String.fromCodePoint(data[i]);
+          if (char < ' ' || char > '~' || !/^[0-9a-zA-Z]+$/.test(char)) {
             break;
           }
-          id += String.fromCodePoint(char);
+          id += char;
         }
       } catch {}
       bpm.out(id);
-      // bpm.out(data);
     },
 
     setUserId: async (data) => {
