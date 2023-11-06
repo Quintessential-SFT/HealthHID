@@ -12,8 +12,7 @@ const getDeviceHumanName = (dev) => Array.from(supportedDevices.entries())
 const hid = {
   device: null,
   outputReportId: null,
-  ongoingRequest: null, // onRetryTimeout, onEndTimeout, readDataChunk, resHandler, retriesLeft, readData, isReading, retry
-  parseResponse: (data) => {},
+  ongoingRequest: null, // onRetryTimeout, onEndTimeout, readDataChunk, resHandler, retriesLeft, readData, isReading, retry, writeData
 
   requestDevice: async () => {
     await hid.closeDevice();
@@ -24,26 +23,24 @@ const hid = {
     hid.device.oninputreport = async (e) => {
       clearTimeout(hid.ongoingRequest.onRetryTimeout);
       if (!hid.ongoingRequest.readData) {
-        hid.ongoingRequest.readData = new Uint8Array([]);
+        hid.ongoingRequest.readData =[];
       }
       const data = new Uint8Array(e.data.buffer);
       try {
         console.log('Read (Chunk): ', arrDecToHex(data));
+        hid.ongoingRequest.isReading = true;
+        clearTimeout(hid.ongoingRequest.onEndTimeout);
+        hid.ongoingRequest.onEndTimeout = setTimeout(async () => {
+          hid.ongoingRequest.isReading = false;
+          const data = hid.ongoingRequest.readData;
+          const writeData = hid.ongoingRequest.writeData;
+          const resHandler = hid.ongoingRequest.resHandler; // TODO: retries
+          hid.clearOngoingRequest();
+          await resHandler(data, writeData);
+        }, 100);
         hid.ongoingRequest.readDataChunk(
-          (chunkData) => hid.ongoingRequest.readData = new Uint8Array([...hid.ongoingRequest.readData, ...chunkData]),
+          (chunkData) => hid.ongoingRequest.readData = [...hid.ongoingRequest.readData, ...chunkData],
           data,
-          () => {
-            hid.ongoingRequest.isReading = true;
-            clearTimeout(hid.ongoingRequest.onEndTimeout);
-            hid.ongoingRequest.onEndTimeout = setTimeout(async () => {
-              hid.ongoingRequest.isReading = false;
-              const parsedData = hid.parseResponse(hid.ongoingRequest.readData);
-              const resHandler = hid.ongoingRequest.resHandler;
-              hid.clearOngoingRequest();
-              console.log(`Read: ${arrDecToHex(parsedData)}`);
-              await resHandler(parsedData);
-            }, 100);
-          },
         );
       } catch {
         await hid.ongoingRequest.retry();
@@ -59,7 +56,7 @@ const hid = {
     }
   },
 
-  sendReport: async (reportId, data, readDataChunk, resHandler) => {
+  sendReport: async (reportId, data, writeData, readDataChunk, resHandler) => {
     if (!hid.device) {
       window.alert('No device selected...');
       return;
@@ -68,6 +65,7 @@ const hid = {
       hid.clearOngoingRequest();
     }
     hid.ongoingRequest = {
+      writeData,
       readDataChunk,
       resHandler,
       retriesLeft: MAX_RETRIES,
@@ -93,8 +91,14 @@ const hid = {
   },
 
   clearOngoingRequest: () => {
-    clearTimeout(hid.ongoingRequest.onRetryTimeout);
-    clearTimeout(hid.ongoingRequest.onEndTimeout);
+    if (hid.ongoingRequest) {
+      if (hid.ongoingRequest.onRetryTimeout) {
+        clearTimeout(hid.ongoingRequest.onRetryTimeout);
+      }
+      if (hid.ongoingRequest.onEndTimeout) {
+        clearTimeout(hid.ongoingRequest.onEndTimeout);
+      }
+    }
     hid.ongoingRequest = null;
   },
 };

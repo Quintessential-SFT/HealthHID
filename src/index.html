@@ -17,8 +17,6 @@
             navigator.hid.addEventListener("connect", handleConnectedDevice);
             navigator.hid.addEventListener("disconnect", handleDisconnectedDevice);
 
-            hid.parseResponse = bpm.parseResponse;
-
             const getInputData = () => document.getElementById("input").value;
             const setOutputData = (data) => document.getElementById("output").value = data;
 
@@ -31,7 +29,7 @@
             };
             const setId = async () => {
                 const id = getInputData();
-                await bpm.cmd.setUserId(parseInt(id));
+                await bpm.cmd.setUserId(id);
             };
         </script>
     </head>
