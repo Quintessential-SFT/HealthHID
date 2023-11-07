@@ -74,7 +74,14 @@ const bpm = {
     },
 
     getData: async () => {
-  
+      const reqData = bpm.formatWriteData([0x12, 0x16, 0x18, 0x22]);
+      hid.sendReport(
+        bpm.REPORT_ID,
+        reqData,
+        undefined,
+        bpm.readDataChunk,
+        bpm.res.getData,
+      );
     },
   
     clearData: async () => {
@@ -124,6 +131,7 @@ const bpm = {
       };
       const userId = decode(data);
       bpm.out(userId);
+      return userId;
     },
 
     setUserId: async (data, writeData) => {
@@ -203,7 +211,47 @@ const bpm = {
     },
 
     getData: async (data) => {
-      bpm.out(data);
+      data = bpm.parseReadResponse(data);
+      const getCycles = (data) => {
+        const digits = data.slice(0, 4);
+        const cyclesStr = digits.map(digit => String.fromCharCode(digit)).join("");
+        return parseInt(cyclesStr, 10);
+      };
+      const cycles = getCycles(data);
+
+      const FIRST_RECORD = 32
+      const RECORD_LENGTH = 32
+
+      let readings = [];
+      for (let offset = FIRST_RECORD; offset < FIRST_RECORD + cycles * RECORD_LENGTH; offset += RECORD_LENGTH) {
+        const record = data.slice(offset, offset + RECORD_LENGTH);
+        let dt;
+        try {
+          const [y3, y4, m1, m2, d1, d2, h1, h2, min1, min2] = record.slice(0, 10).map(b => String.fromCodePoint(b));
+          // TODO: timezone support
+          dt = new Date(`20${y3}${y4}-${m1}${m2}-${d1}${d2}T${h1}${h2}:${min1}${min2}`);
+        } catch {
+          continue;
+        }
+
+        const readingsData = record.slice(17, 17 + 7).map(b => String.fromCharCode(b));
+        const pulse = parseInt('0x' + readingsData.slice(0, 2).join(''), 16);
+        const [dia1, dia2, dia3] = [`0x${readingsData[2]}`, `0x${readingsData[3]}`, `0x${readingsData[4]}`];
+        const diastolicPressure = dia1 * 64 + dia2 * 4 + dia3 / 4;
+        const systolicPressure = parseInt('0x' + readingsData.slice(5, 7).join(''), 16);
+
+        readings = readings.concat({
+          date: dt.toISOString(),
+          systolicPressure,
+          diastolicPressure,
+          pulse,
+        });
+      }
+
+      console.log('Pressure Data: ', readings);
+      const formattedReadings = readings.map(r => `${r.date}: sys=${r.systolicPressure}, dia=${r.diastolicPressure}, pulse=${r.pulse}`).join('\n');
+      bpm.out(formattedReadings);
+      return readings;
     },
 
     clearData: async (data) => {

@@ -31,6 +31,9 @@
                 const id = getInputData();
                 await bpm.cmd.setUserId(id);
             };
+            const getData = async () => {
+              await bpm.cmd.getData();
+            };
         </script>
     </head>
     <body>
@@ -57,10 +60,13 @@
             <button onclick="setId()">
                 Set ID
             </button>
+            <button onclick="getData()">
+                Get Data
+            </button>
         </div>
         <div style="display: flex; flex-direction: column;">
             <div>Output:</div>
-            <textarea id="output" disabled style="resize: none; height: 50px"></textarea>
+            <textarea id="output" disabled style="resize: none; height: 150px"></textarea>
         </div>
     </body>
 </html>
