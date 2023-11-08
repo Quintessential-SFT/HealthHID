@@ -1,0 +1,23 @@
+// Note: This library only uses tsc for type-checking. Build-time transpilation is handled by rspack.
+
+{
+  "include": ["lib/**/*"],
+  "compilerOptions": {
+    "target": "es2022",
+    "lib": [
+      "es6",
+      "dom"
+    ],
+    "module": "commonjs",
+    "rootDir": "lib",
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "sourceMap": true,
+    "outDir": "dist",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "skipLibCheck": true,
+  }
+}

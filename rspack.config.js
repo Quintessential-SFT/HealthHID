@@ -6,7 +6,7 @@ module.exports = {
   mode: 'development',
   devtool: false,
   entry: {
-    main: './lib/index.js',
+    main: './lib/index.ts',
   },
   output: {
     filename: 'web-hid.js',

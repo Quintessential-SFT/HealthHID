@@ -6,11 +6,17 @@
   "private": true,
   "scripts": {
     "dev": "rspack serve",
-    "build": "rspack build"
+    "build": "rimraf dist && rspack build",
+    "type-check": "rimraf dist && tsc"
   },
   "devDependencies": {
     "@rspack/cli": "^0.3.11",
-    "@rspack/core": "^0.3.11"
+    "@rspack/core": "^0.3.11",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.2.2"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "dependencies": {
+    "@types/w3c-web-hid": "^1.0.6"
+  }
 }

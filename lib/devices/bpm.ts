@@ -1,4 +1,4 @@
-import { hid } from '../hid';
+import { Device, ResponseHandler } from '../hid';
 import { arrDecToHex } from "../utils";
 
 export const bpm = {
@@ -6,32 +6,32 @@ export const bpm = {
   WRITE_CHUNK_SIZE: 7,
   ID_LENGTH: 11,
 
-  formatWriteData: (data) => {
+  formatWriteData: (data: number[]) => {
     if (data.length > 7) {
       throw new Error("Maximum write byte length (7) exceeded!");
     }
     return new Uint8Array([data.length, ...data]);
   },
 
-  readDataChunk: (appendData, chunk) => {
+  readDataChunk: (appendData: (data: Uint8Array) => void, chunk: Uint8Array) => {
     const data = chunk.slice(1, (chunk[0] & 15) + 1);
     console.log(`Read (BPM Chunk): ${arrDecToHex(data)}`);
     appendData(data);
   },
 
-  out: (data) => {
+  out: (data: string) => {
     console.log(data);
   },
  
-  setOutputHandler: (handler) => {
+  setOutputHandler: (handler: (data: string) => void) => {
     bpm.out = (data) => {
       handler(data);
     };
   },
 
-  parseReadResponse: (data) => {
+  parseReadResponse: (dev: Device, data: number[]) => {
     if (data.length <= 3 || data[0] != 6) {
-      hid.clearOngoingRequest();
+      dev.clearOngoingRequest();
       throw new Error("Unexpected response");
     }
     const checksum = data.slice(1, data.length - 2).reduce((acc, v) => acc + v, 0) % 256;
@@ -44,9 +44,9 @@ export const bpm = {
   },
 
   cmd: {
-    getUserId: async () => {
+    getUserId: async (dev: Device) => {
       const reqData = bpm.formatWriteData([0x12, 0x16, 0x18, 0x24]);
-      await hid.sendReport(
+      await dev.sendReport(
         bpm.REPORT_ID,
         reqData,
         undefined,
@@ -55,7 +55,7 @@ export const bpm = {
       );
     },
   
-    setUserId: async (userId, clearMemory = false) => {
+    setUserId: async (dev: Device, userId: string, clearMemory = false) => {
       if (userId.length > bpm.ID_LENGTH) {
         throw new Error(`Max ID length (${bpm.ID_LENGTH}) exceeded!`);
       }
@@ -63,56 +63,45 @@ export const bpm = {
         throw new Error(`IDs can't contain non-alphanumeric chars!`);
       }
       const reqData = bpm.formatWriteData([0x12, 0x16, 0x18, 0x23]);
-      await hid.sendReport(
+      await dev.sendReport(
         bpm.REPORT_ID,
         reqData,
         { userId, clearMemory },
         bpm.readDataChunk,
-        bpm.res.setUserId,
+        bpm.res.setUserId as unknown as ResponseHandler,
       );
     },
 
-    getDeviceInfo: async () => {
-  
-    },
+    getDeviceInfo: async () => {},
 
-    getData: async () => {
+    getData: async (dev: Device) => {
       const reqData = bpm.formatWriteData([0x12, 0x16, 0x18, 0x22]);
-      await hid.sendReport(
+      console.log(dev)
+      await dev.sendReport(
         bpm.REPORT_ID,
         reqData,
         undefined,
         bpm.readDataChunk,
-        bpm.res.getData,
+        bpm.res.getData as unknown as ResponseHandler,
       );
     },
   
-    clearData: async () => {
-  
-    },
+    clearData: async () => {},
 
-    getDeviceTime: async () => {
+    getDeviceTime: async () => {},
   
-    },
+    setDeviceTime: async (date: Date) => {},
   
-    setDeviceTime: async (date) => {
+    getDeviceSerial: async () => {},
   
-    },
-  
-    getDeviceSerial: async () => {
-  
-    },
-  
-    getDeviceStatus: async () => {
-  
-    },
+    getDeviceStatus: async () => {},
   },
 
   res: {
-    getUserId: async (data) => {
-      data = bpm.parseReadResponse(data);
+    getUserId: async (dev: Device, data: number[]) => {
+      data = bpm.parseReadResponse(dev, data);
       console.log(`Read: ${arrDecToHex(data)}`);
-      const decode = (data) => {
+      const decode = (data: number[]) => {
         data = data.slice(0, -8); // rm fixed str
         data = data.slice(0, 2 * bpm.ID_LENGTH);
         let id = '';
@@ -137,9 +126,9 @@ export const bpm = {
       return userId;
     },
 
-    setUserId: async (data, writeData) => {
+    setUserId: async (dev: Device, data: number[], writeData: { userId: string, clearMemory: boolean }) => {
       if (data.length !== 1 || data[0] !== 6) {
-        hid.clearOngoingRequest();
+        dev.clearOngoingRequest();
         throw new Error(`Invalid setUserId() response: ${data}`);
       }
 
@@ -147,8 +136,8 @@ export const bpm = {
       const CLEAR = [0x30, 0x30, 0x30, 0x30, 0xFF, 0xFF, 0xFF, 0xFF];
       const NO_CLEAR = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
 
-      const encodeId = (idStr) => {
-        let idBytes = new Array(bpm.ID_LENGTH * 2).fill(0);
+      const encodeId = (idStr: string) => {
+        let idBytes: number[] = new Array(bpm.ID_LENGTH * 2).fill(0);
         const charStart = 'A'.charCodeAt(0);
         for (let i = 0; i < idStr.length * 2; i += 2) {
           const char = idStr[i / 2];
@@ -157,7 +146,7 @@ export const bpm = {
             idBytes[i] = parseInt('0x33', 16);
             idBytes[i + 1] = parseInt(`0x${30 + digit}`, 16);
           } else {
-            const charOffset = char.codePointAt(0) - charStart;
+            const charOffset = char.codePointAt(0)! - charStart;
             idBytes[i] = parseInt('0x34', 16);
             idBytes[i + 1] = parseInt(`0x${30 + charOffset + 1}`, 16);
           }
@@ -184,38 +173,24 @@ export const bpm = {
       //   arg[i + 4] = idStr[i].charCodeAt(0);
       // }
 
-      let hexArg = arrDecToHex(arg);
-      console.log(arg)
-      console.log(hexArg);
-      console.log(typeof hexArg)
-
       // TODO: calculate checksum
       // const checksum = '';
       // hexArg = hexArg.concat(checksum);
 
-      // TEST
-      // hexArg = ['0x30', '0x30', '0x30', '0x31', '0x30', '0x30', '0x30', '0x31', '0x34', '0x32', '0x33', '0x32', '0x33', '0x35', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x30', '0x31', '0x35'];
-
-      // hexArg = ['0xff', '0xff', '0xff', '0xff', '0xff', '0xff', '0xff', '0xff', '0x0x34', '0x0x31', '0x0x33', '0x0x32', '0x0x33', '0x0x35', '0x00', '0x00', '0x00', '0x00']
-      while (!!hexArg.length) {
-        const chunk = hexArg.slice(0, bpm.WRITE_CHUNK_SIZE);
-        console.log('Write (BPM Chunk): ', chunk);
-        await hid.device.sendReport(bpm.REPORT_ID, new Uint8Array(chunk)); // TEST
-        hexArg = hexArg.slice(chunk.length);
-
-        await new Promise(r => setTimeout(r, 50));
+      while (!!arg.length) {
+        const chunk = arg.slice(0, bpm.WRITE_CHUNK_SIZE);
+        console.log('Write (BPM Chunk): ', arrDecToHex(chunk));
+        await dev.raw.sendReport(bpm.REPORT_ID, new Uint8Array(chunk)); // TEST
+        arg = arg.slice(chunk.length);
+        await new Promise(r => window.setTimeout(r, 50));
       }
-
-      // bpm.out(data);
     },
 
-    getDeviceInfo: async (data) => {
-      bpm.out(data);
-    },
+    getDeviceInfo: async (data: number[]) => {},
 
-    getData: async (data) => {
-      data = bpm.parseReadResponse(data);
-      const getCycles = (data) => {
+    getData: async (dev: Device, data: number[]) => {
+      data = bpm.parseReadResponse(dev, data);
+      const getCycles = (data: number[]) => {
         const digits = data.slice(0, 4);
         const cyclesStr = digits.map(digit => String.fromCharCode(digit)).join("");
         return parseInt(cyclesStr, 10);
@@ -225,7 +200,12 @@ export const bpm = {
       const FIRST_RECORD = 32
       const RECORD_LENGTH = 32
 
-      let readings = [];
+      let readings: {
+        date: string,
+        systolicPressure: number,
+        diastolicPressure: number,
+        pulse: number,
+      }[] = [];
       for (let offset = FIRST_RECORD; offset < FIRST_RECORD + cycles * RECORD_LENGTH; offset += RECORD_LENGTH) {
         const record = data.slice(offset, offset + RECORD_LENGTH);
         let dt;
@@ -239,7 +219,7 @@ export const bpm = {
 
         const readingsData = record.slice(17, 17 + 7).map(b => String.fromCharCode(b));
         const pulse = parseInt('0x' + readingsData.slice(0, 2).join(''), 16);
-        const [dia1, dia2, dia3] = [`0x${readingsData[2]}`, `0x${readingsData[3]}`, `0x${readingsData[4]}`];
+        const [dia1, dia2, dia3] = [parseInt(readingsData[2], 16), parseInt(readingsData[3], 16), parseInt(readingsData[4], 16)];
         const diastolicPressure = dia1 * 64 + dia2 * 4 + dia3 / 4;
         const systolicPressure = parseInt('0x' + readingsData.slice(5, 7).join(''), 16);
 
@@ -257,24 +237,14 @@ export const bpm = {
       return readings;
     },
 
-    clearData: async (data) => {
-      bpm.out(data);
-    },
+    clearData: async (data: number[]) => {},
 
-    getDeviceTime: async (data) => {
-      bpm.out(data);
-    },
+    getDeviceTime: async (data: number[]) => {},
 
-    setDeviceTime: async (data) => {
-      bpm.out(data);
-    },
+    setDeviceTime: async (data: number[]) => {},
 
-    getDeviceSerial: async (data) => {
-      bpm.out(data);
-    },
+    getDeviceSerial: async (data: number[]) => {},
 
-    getDeviceStatus: async (data) => {
-      bpm.out(data);
-    },
+    getDeviceStatus: async (data: number[]) => {},
   },
 };

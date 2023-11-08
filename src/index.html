@@ -6,15 +6,20 @@
         <meta name="theme-color" content="#fafafa">
         <title>Designated HID Test Site</title>
         <script>
+          let device = undefined;
+
+          const getInputData = () => document.getElementById("input").value;
+          const setOutputData = (data) => document.getElementById("output").value = data;
+
           const getId = async () => {
-            await window.WebHid.bpm.cmd.getUserId();
+            await window.WebHid.bpm.cmd.getUserId(device, );
           };
           const setId = async () => {
             const id = getInputData();
-            await window.WebHid.bpm.cmd.setUserId(id);
+            await window.WebHid.bpm.cmd.setUserId(device, id);
           };
           const getData = async () => {
-            await window.WebHid.bpm.cmd.getData();
+            await window.WebHid.bpm.cmd.getData(device, );
           };
         </script>
     </head>
@@ -22,10 +27,10 @@
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <h2>Designated HID Test Site</h2>
         <div>
-            <button onclick="window.WebHid.hid.requestDevice()">
+            <button onclick="window.WebHid.Device.requestDevice().then(dev => device = dev);">
                 Select Device
             </button>
-            <button onclick="window.WebHid.hid.closeDevice()">
+            <button onclick="device.closeDevice().then(() => device = undefined);">
                 Close Device
             </button>
         </div>
@@ -61,9 +66,6 @@
 
           navigator.hid.addEventListener("connect", handleConnectedDevice);
           navigator.hid.addEventListener("disconnect", handleDisconnectedDevice);
-
-          const getInputData = () => document.getElementById("input").value;
-          const setOutputData = (data) => document.getElementById("output").value = data;
 
           webHid.bpm.setOutputHandler((data) => {
             setOutputData(data);
