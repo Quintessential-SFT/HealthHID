@@ -4,46 +4,28 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#fafafa">
-        <script src="./hid.js"></script>
-        <script src="./bpm.js"></script>
         <title>Designated HID Test Site</title>
         <script>
-            const handleConnectedDevice = (e) => console.log(`Device connected: ${getDeviceHumanName(e.device)}`);
-            const handleDisconnectedDevice = (e) => {
-                console.log(`Device disconnected: ${getDeviceHumanName(e.device)}`);
-                _device = null;
-            };
-
-            navigator.hid.addEventListener("connect", handleConnectedDevice);
-            navigator.hid.addEventListener("disconnect", handleDisconnectedDevice);
-
-            const getInputData = () => document.getElementById("input").value;
-            const setOutputData = (data) => document.getElementById("output").value = data;
-
-            bpm.setOutputHandler((data) => {
-                setOutputData(data);
-            });
-
-            const getId = async () => {
-                await bpm.cmd.getUserId();
-            };
-            const setId = async () => {
-                const id = getInputData();
-                await bpm.cmd.setUserId(id);
-            };
-            const getData = async () => {
-              await bpm.cmd.getData();
-            };
+          const getId = async () => {
+            await window.WebHid.bpm.cmd.getUserId();
+          };
+          const setId = async () => {
+            const id = getInputData();
+            await window.WebHid.bpm.cmd.setUserId(id);
+          };
+          const getData = async () => {
+            await window.WebHid.bpm.cmd.getData();
+          };
         </script>
     </head>
     <body>
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <h2>Designated HID Test Site</h2>
         <div>
-            <button onclick="hid.requestDevice()">
+            <button onclick="window.WebHid.hid.requestDevice()">
                 Select Device
             </button>
-            <button onclick="hid.closeDevice()">
+            <button onclick="window.WebHid.hid.closeDevice()">
                 Close Device
             </button>
         </div>
@@ -68,5 +50,24 @@
             <div>Output:</div>
             <textarea id="output" disabled style="resize: none; height: 150px"></textarea>
         </div>
+
+        <script type="module">
+          const webHid = window.WebHid;
+          const handleConnectedDevice = (e) => console.log(`Device connected: ${webHid.getDeviceHumanName(e.device)}`);
+          const handleDisconnectedDevice = (e) => {
+            console.log(`Device disconnected: ${webHid.getDeviceHumanName(e.device)}`);
+            webHid.device = null;
+          };
+
+          navigator.hid.addEventListener("connect", handleConnectedDevice);
+          navigator.hid.addEventListener("disconnect", handleDisconnectedDevice);
+
+          const getInputData = () => document.getElementById("input").value;
+          const setOutputData = (data) => document.getElementById("output").value = data;
+
+          webHid.bpm.setOutputHandler((data) => {
+            setOutputData(data);
+          });
+        </script>
     </body>
 </html>
