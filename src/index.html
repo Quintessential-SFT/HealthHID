@@ -17,17 +17,17 @@
           };
 
           const getId = async () => {
-            await window.HealthHid.bpm.cmd.getUserId(device);
+            await window.HealthHid.MicrolifeBPM.getUserId(device);
           };
           const setId = async () => {
             const id = getInputData();
-            await window.HealthHid.bpm.cmd.setUserId(device, id);
+            await window.HealthHid.MicrolifeBPM.setUserId(device, id);
           };
           const getData = async () => {
-            await window.HealthHid.bpm.cmd.getData(device);
+            await window.HealthHid.MicrolifeBPM.getData(device);
           };
           const getUserSlotInfo = async () => {
-            await window.HealthHid.bpm.cmd.getUserSlotInfo(device);
+            await window.HealthHid.MicrolifeBPM.getUserSlotInfo(device);
           };
         </script>
     </head>

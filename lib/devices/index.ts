@@ -1,1 +1,1 @@
-export * from './bpm';
+export * from './MicrolifeBPM';

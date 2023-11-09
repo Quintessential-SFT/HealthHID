@@ -16,7 +16,7 @@ By default, said output is piped to the console, but a custom data handler may b
 ``` bash
 # Retrieving the active slot's current user ID from a Microlife Blood Pressure Monitor
 
-const userId = await HealthHid.bpm.cmd.getUserId(device);
+const userId = await HealthHid.MicrolifeBPM.getUserId(device);
 console.log(userId);
 > KON14
 ```

@@ -1,25 +1,25 @@
 import { Device, ResponseHandler } from '../hid';
 import { arrDecToHex } from "../utils";
 
-export const bpm = {
-  REPORT_ID: 0x00,
-  WRITE_CHUNK_SIZE: 7,
-  ID_LENGTH: 11,
+export namespace MicrolifeBPM {
+  const REPORT_ID = 0x00;
+  const WRITE_CHUNK_SIZE = 7;
+  const ID_LENGTH = 11;
 
-  formatWriteData: (data: number[]) => {
+  const formatWriteData = (data: number[]) => {
     if (data.length > 7) {
       throw new Error("Maximum write byte length (7) exceeded!");
     }
     return new Uint8Array([data.length, ...data]);
-  },
+  };
 
-  readDataChunk: (appendData: (data: Uint8Array) => void, chunk: Uint8Array) => {
+  const readDataChunk = (appendData: (data: Uint8Array) => void, chunk: Uint8Array) => {
     const data = chunk.slice(1, (chunk[0] & 15) + 1);
     console.log(`Read (BPM Chunk): ${arrDecToHex(data)}`);
     appendData(data);
-  },
+  };
 
-  parseReadResponse: (dev: Device, data: number[]) => {
+  const parseReadResponse = (dev: Device, data: number[]) => {
     if (data.length <= 3 || data[0] != 6) {
       dev.clearOngoingRequest();
       throw new Error("Unexpected response");
@@ -31,18 +31,18 @@ export const bpm = {
       throw new Error(`Checksum mismatch: computed ${checksumHex}, expected ${expectedChecksum}.`);
     }
     return data.slice(1, -2);
-  },
+  };
 
-  cmd: {
+  const cmd = {
     getUserId: async (dev: Device) => {
-      const reqData = bpm.formatWriteData([0x12, 0x16, 0x18, 0x24]);
+      const reqData = formatWriteData([0x12, 0x16, 0x18, 0x24]);
       return new Promise(async (resolve, reject) =>
         await dev.sendReport(
-          bpm.REPORT_ID,
+          REPORT_ID,
           reqData,
           undefined,
-          bpm.readDataChunk,
-          bpm.res.getUserId,
+          readDataChunk,
+          res.getUserId,
           resolve,
           reject,
         )
@@ -50,33 +50,33 @@ export const bpm = {
     },
   
     setUserId: async (dev: Device, userId: string, clearMemory = false) => {
-      // if (userId.length > bpm.ID_LENGTH) {
-      //   throw new Error(`Max ID length (${bpm.ID_LENGTH}) exceeded!`);
+      // if (userId.length > ID_LENGTH) {
+      //   throw new Error(`Max ID length (${ID_LENGTH}) exceeded!`);
       // }
       // if (!/^[0-9a-zA-Z]+$/.test(userId)) {
       //   throw new Error(`IDs can't contain non-alphanumeric chars!`);
       // }
-      // const reqData = bpm.formatWriteData([0x12, 0x16, 0x18, 0x23]);
+      // const reqData = formatWriteData([0x12, 0x16, 0x18, 0x23]);
       // await dev.sendReport(
-      //   bpm.REPORT_ID,
+      //   REPORT_ID,
       //   reqData,
       //   { userId, clearMemory },
-      //   bpm.readDataChunk,
-      //   bpm.res.setUserId as unknown as ResponseHandler,
+      //   readDataChunk,
+      //   res.setUserId as unknown as ResponseHandler,
       // );
     },
 
     getDeviceInfo: async () => {},
 
     getData: async (dev: Device) => {
-      const reqData = bpm.formatWriteData([0x12, 0x16, 0x18, 0x22]);
+      const reqData = formatWriteData([0x12, 0x16, 0x18, 0x22]);
       return new Promise(async (resolve, reject) =>
         await dev.sendReport(
-          bpm.REPORT_ID,
+          REPORT_ID,
           reqData,
           undefined,
-          bpm.readDataChunk,
-          bpm.res.getData as unknown as ResponseHandler,
+          readDataChunk,
+          res.getData as unknown as ResponseHandler,
           resolve,
           reject,
         )
@@ -94,28 +94,28 @@ export const bpm = {
     getDeviceStatus: async () => {},
 
     getUserSlotInfo: async (dev: Device) => {
-      const reqData = bpm.formatWriteData([0x12, 0x16, 0x18, 0x28]);
+      const reqData = formatWriteData([0x12, 0x16, 0x18, 0x28]);
       return new Promise(async (resolve, reject) =>
         await dev.sendReport(
-          bpm.REPORT_ID,
+          REPORT_ID,
           reqData,
           undefined,
-          bpm.readDataChunk,
-          bpm.res.getUserSlotInfo,
+          readDataChunk,
+          res.getUserSlotInfo,
           resolve,
           reject,
         )
       );
     },
-  },
+  };
 
-  res: {
+  const res = {
     getUserId: async (dev: Device, data: number[]) => {
-      data = bpm.parseReadResponse(dev, data);
+      data = parseReadResponse(dev, data);
       console.log(`Read: ${arrDecToHex(data)}`);
       const decode = (data: number[]) => {
         data = data.slice(0, -8); // rm fixed str
-        data = data.slice(0, 2 * bpm.ID_LENGTH);
+        data = data.slice(0, 2 * ID_LENGTH);
         let id = '';
         for (let i = 0; i < data.length; i += 2) {
           let char = '';
@@ -149,7 +149,7 @@ export const bpm = {
       // const NO_CLEAR = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
       //
       // const encodeId = (idStr: string) => {
-      //   let idBytes: number[] = new Array(bpm.ID_LENGTH * 2).fill(0);
+      //   let idBytes: number[] = new Array(ID_LENGTH * 2).fill(0);
       //   const charStart = 'A'.charCodeAt(0);
       //   for (let i = 0; i < idStr.length * 2; i += 2) {
       //     const char = idStr[i / 2];
@@ -190,9 +190,9 @@ export const bpm = {
       // // hexArg = hexArg.concat(checksum);
       //
       // while (!!arg.length) {
-      //   const chunk = arg.slice(0, bpm.WRITE_CHUNK_SIZE);
+      //   const chunk = arg.slice(0, WRITE_CHUNK_SIZE);
       //   console.log('Write (BPM Chunk): ', arrDecToHex(chunk));
-      //   await dev.raw.sendReport(bpm.REPORT_ID, new Uint8Array(chunk)); // TEST
+      //   await dev.raw.sendReport(REPORT_ID, new Uint8Array(chunk)); // TEST
       //   arg = arg.slice(chunk.length);
       //   await new Promise(r => window.setTimeout(r, 50));
       // }
@@ -201,7 +201,7 @@ export const bpm = {
     getDeviceInfo: async (dev: Device, data: number[]) => {},
 
     getData: async (dev: Device, data: number[]) => {
-      data = bpm.parseReadResponse(dev, data);
+      data = parseReadResponse(dev, data);
       const getCycles = (data: number[]) => {
         const digits = data.slice(0, 4);
         const cyclesStr = digits.map(digit => String.fromCharCode(digit)).join("");
@@ -260,12 +260,25 @@ export const bpm = {
     getDeviceStatus: async (dev: Device, data: number[]) => {},
 
     getUserSlotInfo: async (dev: Device, data: number[]) => {
-      data = bpm.parseReadResponse(dev, data);
+      data = parseReadResponse(dev, data);
       console.log(`Read: ${arrDecToHex(data)}`);
       const totalSlots = parseInt(String.fromCharCode(data[4]), 10);
       const currentSlot = parseInt(String.fromCharCode(data[5]), 10);
       dev.strOut(`Total User Slots: ${totalSlots}\nCurrent User Slot: ${currentSlot}`);
       return { totalSlots, currentSlot };
     },
-  },
+  };
+
+  export const {
+    getUserId,
+    setUserId,
+    getDeviceInfo,
+    getData,
+    clearData,
+    getDeviceTime,
+    setDeviceTime,
+    getDeviceSerial,
+    getDeviceStatus,
+    getUserSlotInfo,
+  } = cmd;
 };
