@@ -9,10 +9,10 @@ module.exports = {
     main: './lib/index.ts',
   },
   output: {
-    filename: 'web-hid.js',
+    filename: 'health-hid.js',
     path: path.resolve(__dirname, 'dist'),
     library: {
-      name: 'WebHid',
+      name: 'HealthHid',
       type: 'umd',
     },
   },

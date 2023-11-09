@@ -12,17 +12,17 @@
           const setOutputData = (data) => document.getElementById("output").value = data;
 
           const getId = async () => {
-            await window.WebHid.bpm.cmd.getUserId(device);
+            await window.HealthHid.bpm.cmd.getUserId(device);
           };
           const setId = async () => {
             const id = getInputData();
-            await window.WebHid.bpm.cmd.setUserId(device, id);
+            await window.HealthHid.bpm.cmd.setUserId(device, id);
           };
           const getData = async () => {
-            await window.WebHid.bpm.cmd.getData(device);
+            await window.HealthHid.bpm.cmd.getData(device);
           };
           const getUserSlotInfo = async () => {
-            await window.WebHid.bpm.cmd.getUserSlotInfo(device);
+            await window.HealthHid.bpm.cmd.getUserSlotInfo(device);
           };
         </script>
     </head>
@@ -30,7 +30,7 @@
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <h2>Designated HID Test Site</h2>
         <div>
-            <button onclick="window.WebHid.Device.requestDevice().then(dev => device = dev);">
+            <button onclick="window.HealthHid.Device.requestDevice().then(dev => device = dev);">
                 Select Device
             </button>
             <button onclick="device.closeDevice().then(() => device = undefined);">
@@ -63,17 +63,17 @@
         </div>
 
         <script type="module">
-          const webHid = window.WebHid;
-          const handleConnectedDevice = (e) => console.log(`Device connected: ${webHid.getDeviceHumanName(e.device)}`);
+          const healthHid = window.HealthHid;
+          const handleConnectedDevice = (e) => console.log(`Device connected: ${healthHid.getDeviceHumanName(e.device)}`);
           const handleDisconnectedDevice = (e) => {
-            console.log(`Device disconnected: ${webHid.getDeviceHumanName(e.device)}`);
-            webHid.device = null;
+            console.log(`Device disconnected: ${healthHid.getDeviceHumanName(e.device)}`);
+            healthHid.device = null;
           };
 
           navigator.hid.addEventListener("connect", handleConnectedDevice);
           navigator.hid.addEventListener("disconnect", handleDisconnectedDevice);
 
-          webHid.bpm.setOutputHandler((data) => {
+          healthHid.bpm.setOutputHandler((data) => {
             setOutputData(data);
           });
         </script>

@@ -1,7 +1,7 @@
 {
-  "name": "web-hid",
+  "name": "health-hid",
   "version": "0.0.1",
-  "description": "A library for interacting with Web-HID devices",
+  "description": "A library for interacting with medical devices over WebHID.",
   "main": "index.js",
   "private": true,
   "scripts": {
