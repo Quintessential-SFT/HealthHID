@@ -11,6 +11,11 @@
           const getInputData = () => document.getElementById("input").value;
           const setOutputData = (data) => document.getElementById("output").value = data;
 
+          const onDevice = (dev) => {
+            device = dev;
+            dev.strOut = (data) => setOutputData(data);
+          };
+
           const getId = async () => {
             await window.HealthHid.bpm.cmd.getUserId(device);
           };
@@ -30,7 +35,7 @@
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <h2>Designated HID Test Site</h2>
         <div>
-            <button onclick="window.HealthHid.Device.requestDevice().then(dev => device = dev);">
+            <button onclick="window.HealthHid.Device.requestDevice().then(dev => onDevice(dev));">
                 Select Device
             </button>
             <button onclick="device.closeDevice().then(() => device = undefined);">
@@ -72,10 +77,6 @@
 
           navigator.hid.addEventListener("connect", handleConnectedDevice);
           navigator.hid.addEventListener("disconnect", handleDisconnectedDevice);
-
-          healthHid.bpm.setOutputHandler((data) => {
-            setOutputData(data);
-          });
         </script>
     </body>
 </html>

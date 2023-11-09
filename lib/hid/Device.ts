@@ -16,6 +16,7 @@ export const getDeviceHumanName = (dev: MapValueType<typeof supportedDevices>) =
 export class Device {
   private readonly device: HIDDevice;
   private ongoingRequest?: OngoingRequest;
+  private _strOut: (data: string) => void;
 
   private constructor(device: HIDDevice) {
     this.device = device;
@@ -54,6 +55,9 @@ export class Device {
         await this.ongoingRequest.retry();
       }
     };
+    this._strOut = (data: string) => {
+      console.log(data);
+    };
     console.log(`Opened device: ${getDeviceHumanName(device)}`);
   };
 
@@ -67,6 +71,12 @@ export class Device {
   };
 
   get raw() { return this.device; }
+
+  get strOut() { return this._strOut; }
+
+  set strOut(handler: (data: string) => void) {
+    this._strOut = handler;
+  }
 
   closeDevice = async () => {
       await this.device.close();

@@ -19,16 +19,6 @@ export const bpm = {
     appendData(data);
   },
 
-  out: (data: string) => {
-    console.log(data);
-  },
- 
-  setOutputHandler: (handler: (data: string) => void) => {
-    bpm.out = (data) => {
-      handler(data);
-    };
-  },
-
   parseReadResponse: (dev: Device, data: number[]) => {
     if (data.length <= 3 || data[0] != 6) {
       dev.clearOngoingRequest();
@@ -144,7 +134,7 @@ export const bpm = {
         return id;
       };
       const userId = decode(data);
-      bpm.out(userId);
+      dev.strOut(userId);
       return userId;
     },
 
@@ -255,7 +245,7 @@ export const bpm = {
 
       console.log('Pressure Data: ', readings);
       const formattedReadings = readings.map(r => `${r.date}: sys=${r.systolicPressure}, dia=${r.diastolicPressure}, pulse=${r.pulse}`).join('\n');
-      bpm.out(formattedReadings);
+      dev.strOut(formattedReadings);
       return readings;
     },
 
@@ -274,7 +264,7 @@ export const bpm = {
       console.log(`Read: ${arrDecToHex(data)}`);
       const totalSlots = parseInt(String.fromCharCode(data[4]), 10);
       const currentSlot = parseInt(String.fromCharCode(data[5]), 10);
-      bpm.out(`Total User Slots: ${totalSlots}\nCurrent User Slot: ${currentSlot}`);
+      dev.strOut(`Total User Slots: ${totalSlots}\nCurrent User Slot: ${currentSlot}`);
       return { totalSlots, currentSlot };
     },
   },

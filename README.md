@@ -10,7 +10,7 @@ As such, users of the library need to manually call ask for a device handle via 
 Upon receiving access, the device will be automatically opened and ready for use.<br />
 Individual devices may then utilize said device handle to interact with the hardware device through the relevant device utils.<br />
 Besides returning the actual response, device commands typically log successful output in a text representation.<br />
-By default, said output is piped to the console, but a custom data handler may be specified via `HealthHid.bpm.cmd.setOutputHandler()`.
+By default, said output is piped to the console, but a custom data handler may be specified via `devHandle.strOut = dataHandler`.
 
 ### Example: 👨🏻‍🔬
 ``` bash
