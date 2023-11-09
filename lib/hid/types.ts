@@ -1,4 +1,5 @@
 import type { Device } from "./Device";
+import { CmdReject, CmdResolve } from "../utils";
 
 export type WriteData = { [key: string]: any };
 
@@ -16,4 +17,6 @@ export type OngoingRequest = {
   onRetryTimeout?: number;
   onEndTimeout?: number;
   retry: () => Promise<void>;
+  resolve: CmdResolve,
+  reject: CmdReject,
 };

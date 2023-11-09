@@ -9,12 +9,17 @@ Due to WebHID security-related limitations, users need to explicitly grant the p
 As such, users of the library need to manually call ask for a device handle via `Device.requestDevice()`.<br />
 Upon receiving access, the device will be automatically opened and ready for use.<br />
 Individual devices may then utilize said device handle to interact with the hardware device through the relevant device utils.<br />
-<br />
-Example: `await HealthHid.bpm.cmd.getUserId(device);`<br />
-<br />
-Due to WebHID being event-based, the library itself is currently also built around events.<br />
-Meaning the aforementioned example's promise resolution won't actually return the hw response!<br />
-Responses may be piped through an output handler specified via `HealthHid.bpm.setOutputHandler()`.<br />
+Besides returning the actual response, device commands typically log successful output in a text representation.<br />
+By default, said output is piped to the console, but a custom data handler may be specified via `HealthHid.bpm.cmd.setOutputHandler()`.
+
+### Example: 👨🏻‍🔬
+``` bash
+# Retrieving the active slot's current user ID from a Microlife Blood Pressure Monitor
+
+const userId = await HealthHid.bpm.cmd.getUserId(device);
+console.log(userId);
+> KON14
+```
 
 ### Demo Dashboard:
 ``` bash

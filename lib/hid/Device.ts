@@ -1,5 +1,5 @@
 import { WriteData, ReadDataChunk, ResponseHandler, OngoingRequest } from "./types";
-import { arrDecToHex, MapValueType } from "../utils";
+import { arrDecToHex, CmdReject, CmdResolve, MapValueType } from "../utils";
 
 const MAX_RETRIES = 15;
 const RETRY_INTERVAL_MS = 100;
@@ -36,8 +36,15 @@ export class Device {
           const data = this.ongoingRequest.readData;
           const writeData = this.ongoingRequest.writeData;
           const resHandler = this.ongoingRequest.resHandler; // TODO: retries
-          this.clearOngoingRequest();
-          await resHandler(this, data, writeData);
+          const resolve = this.ongoingRequest.resolve;
+          const reject = this.ongoingRequest.reject;
+            this.clearOngoingRequest();
+          try {
+            const res = await resHandler(this, data, writeData);
+            resolve(res);
+          } catch (err) {
+            reject(err);
+          }
         }, 100);
         this.ongoingRequest.readDataChunk(
           (chunkData) => this.ongoingRequest!.readData = [...this.ongoingRequest!.readData, ...chunkData],
@@ -71,6 +78,8 @@ export class Device {
     writeData: WriteData | undefined,
     readDataChunk: ReadDataChunk,
     resHandler: ResponseHandler,
+    resolve: CmdResolve,
+    reject: CmdReject,
   ) => {
     if (!this.device) {
       window.alert('No device selected...');
@@ -87,6 +96,8 @@ export class Device {
       writeData,
       resHandler,
       retry: async () => {},
+      resolve,
+      reject,
     };
     console.log(`Write: ${arrDecToHex(data)}`);
     const _sendReport = async () => {
