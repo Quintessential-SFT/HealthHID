@@ -1,10 +1,10 @@
 const path = require('path');
 const rspack = require('@rspack/core');
 
-module.exports = {
+module.exports = (env, exports) => ({
   context: __dirname,
-  mode: 'development',
-  devtool: false,
+  mode: !!env.production ? 'production' : 'development',
+  devtool: !!env.production ? 'source-map' : false,
   entry: {
     main: './lib/index.ts',
   },
@@ -21,4 +21,4 @@ module.exports = {
       template: './src/index.html',
     }),
   ],
-};
+});
