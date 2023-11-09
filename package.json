@@ -4,16 +4,6 @@
   "description": "A library for interacting with medical devices over WebHID.",
   "author": "Quintessential SFT",
   "license": "MIT",
-  "keywords": [
-    "WebHID",
-    "TypeScript",
-    "Biometrics",
-    "bioinformatics"
-  ],
-  "exports": {
-    ".": "./dist/health-hid.js"
-  },
-  "private": false,
   "scripts": {
     "setup": "npm ci",
     "dev": "rspack serve",
@@ -21,6 +11,15 @@
     "build-prod": "rimraf dist && rspack build --env production",
     "type-check": "rimraf dist && tsc"
   },
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@github.com:Quintessential-SFT/HealthHID.git"
+  },
+  "private": false,
+  "exports": {
+    ".": "./dist/health-hid.js"
+  },
+  "types": "./dist/health-hid.d.ts",
   "files": [
     "dist"
   ],
@@ -31,8 +30,15 @@
     "@rspack/cli": "^0.3.11",
     "@rspack/core": "^0.3.11",
     "@types/w3c-web-hid": "^1.0.6",
+    "npm-dts-webpack-plugin": "^1.3.12",
     "rimraf": "^5.0.5",
     "typescript": "^5.2.2"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "keywords": [
+    "WebHID",
+    "TypeScript",
+    "Biometrics",
+    "bioinformatics"
+  ]
 }

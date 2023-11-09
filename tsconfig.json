@@ -1,5 +1,3 @@
-// Note: This library only uses tsc for type-checking. Build-time transpilation is handled by rspack.
-
 {
   "include": ["lib/**/*"],
   "compilerOptions": {
