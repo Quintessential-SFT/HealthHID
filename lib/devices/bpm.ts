@@ -95,6 +95,17 @@ export const bpm = {
     getDeviceSerial: async () => {},
   
     getDeviceStatus: async () => {},
+
+    getUserSlotInfo: async (dev: Device) => {
+      const reqData = bpm.formatWriteData([0x12, 0x16, 0x18, 0x28]);
+      await dev.sendReport(
+        bpm.REPORT_ID,
+        reqData,
+        undefined,
+        bpm.readDataChunk,
+        bpm.res.getUserSlotInfo,
+      );
+    },
   },
 
   res: {
@@ -186,7 +197,7 @@ export const bpm = {
       }
     },
 
-    getDeviceInfo: async (data: number[]) => {},
+    getDeviceInfo: async (dev: Device, data: number[]) => {},
 
     getData: async (dev: Device, data: number[]) => {
       data = bpm.parseReadResponse(dev, data);
@@ -237,14 +248,23 @@ export const bpm = {
       return readings;
     },
 
-    clearData: async (data: number[]) => {},
+    clearData: async (dev: Device, data: number[]) => {},
 
-    getDeviceTime: async (data: number[]) => {},
+    getDeviceTime: async (dev: Device, data: number[]) => {},
 
-    setDeviceTime: async (data: number[]) => {},
+    setDeviceTime: async (dev: Device, data: number[]) => {},
 
-    getDeviceSerial: async (data: number[]) => {},
+    getDeviceSerial: async (dev: Device, data: number[]) => {},
 
-    getDeviceStatus: async (data: number[]) => {},
+    getDeviceStatus: async (dev: Device, data: number[]) => {},
+
+    getUserSlotInfo: async (dev: Device, data: number[]) => {
+      data = bpm.parseReadResponse(dev, data);
+      console.log(`Read: ${arrDecToHex(data)}`);
+      const totalSlots = parseInt(String.fromCharCode(data[4]), 10);
+      const currentSlot = parseInt(String.fromCharCode(data[5]), 10);
+      bpm.out(`Total User Slots: ${totalSlots}\nCurrent User Slot: ${currentSlot}`);
+      return { totalSlots, currentSlot };
+    },
   },
 };

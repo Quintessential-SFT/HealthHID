@@ -12,14 +12,17 @@
           const setOutputData = (data) => document.getElementById("output").value = data;
 
           const getId = async () => {
-            await window.WebHid.bpm.cmd.getUserId(device, );
+            await window.WebHid.bpm.cmd.getUserId(device);
           };
           const setId = async () => {
             const id = getInputData();
             await window.WebHid.bpm.cmd.setUserId(device, id);
           };
           const getData = async () => {
-            await window.WebHid.bpm.cmd.getData(device, );
+            await window.WebHid.bpm.cmd.getData(device);
+          };
+          const getUserSlotInfo = async () => {
+            await window.WebHid.bpm.cmd.getUserSlotInfo(device);
           };
         </script>
     </head>
@@ -49,6 +52,9 @@
             </button>
             <button onclick="getData()">
                 Get Data
+            </button>
+            <button onclick="getUserSlotInfo()">
+                Get User Slot Info
             </button>
         </div>
         <div style="display: flex; flex-direction: column;">
