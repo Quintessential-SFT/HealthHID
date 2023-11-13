@@ -1,14 +1,13 @@
-import { WriteData, ReadDataChunk, ResponseHandler, OngoingRequest } from "./types";
+import { WriteData, ReadDataChunk, ResponseHandler, OngoingRequest, SupportedDevice } from "./types";
 import { arrDecToHex, CmdReject, CmdResolve, MapValueType } from "../utils";
 
 const MAX_RETRIES = 15;
 const RETRY_INTERVAL_MS = 100;
 
-const supportedDevices = new Map([
-  ['Microlife BP A6 PC', { vendorId: 0x4b4, productId: 0x5500 }],
+const supportedDevices: Map<SupportedDevice, { vendorId: number, productId: number }> = new Map([
+  ['Microlife BPM', { vendorId: 0x4b4, productId: 0x5500 }],
+  ['Microlife GlucoTeq', { vendorId: 0x04D9, productId: 0xB564 }],
 ]);
-
-const deviceFilter = Array.from(supportedDevices.values());
 
 export const getDeviceHumanName = (dev: MapValueType<typeof supportedDevices>) => Array.from(supportedDevices.entries())
   .find(d => d[1].vendorId === dev.vendorId && d[1].productId === dev.productId)![0];
@@ -61,8 +60,18 @@ export class Device {
     console.log(`Opened device: ${getDeviceHumanName(device)}`);
   };
 
-  static requestDevice = async () => {
-    const devices = await navigator.hid.requestDevice({ filters: deviceFilter });
+  static requestDevice = async (deviceFilter?: SupportedDevice[]) => {
+    const filters: { vendorId: number, productId: number }[] = [];
+    if (deviceFilter) {
+      deviceFilter.forEach(key => {
+        const descriptor = supportedDevices.get(key);
+        if (!descriptor) {
+          throw new Error(`Invalid device filter. Unsupported device: ${key}`);
+        }
+        filters.push(descriptor);
+      });
+    };
+    const devices = await navigator.hid.requestDevice({ filters });
     if (devices.length < 1) return;
     const device = devices[0]; // grab first interface
     await device.close();

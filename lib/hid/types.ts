@@ -20,3 +20,7 @@ export type OngoingRequest = {
   resolve: CmdResolve,
   reject: CmdReject,
 };
+
+export type SupportedDevice =
+  | 'Microlife BPM'
+  | 'Microlife GlucoTeq';
