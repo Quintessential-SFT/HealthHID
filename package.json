@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "ssh://git@github.com:Quintessential-SFT/HealthHID.git"
+    "url": "git+ssh://git@github.com/Quintessential-SFT/HealthHID.git"
   },
   "private": false,
   "exports": {
