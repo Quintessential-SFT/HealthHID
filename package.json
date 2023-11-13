@@ -1,5 +1,5 @@
 {
-  "name": "@quintessential-sft/health-hid",
+  "name": "@quintessential/health-hid",
   "version": "0.0.1",
   "description": "A library for interacting with medical devices over WebHID.",
   "author": "Quintessential SFT",
