@@ -271,14 +271,14 @@ export namespace MicrolifeBPM {
 
   export const {
     getUserId,
-    setUserId,
-    getDeviceInfo,
+    // setUserId,
+    // getDeviceInfo,
     getData,
-    clearData,
-    getDeviceTime,
-    setDeviceTime,
-    getDeviceSerial,
-    getDeviceStatus,
+    // clearData,
+    // getDeviceTime,
+    // setDeviceTime,
+    // getDeviceSerial,
+    // getDeviceStatus,
     getUserSlotInfo,
   } = cmd;
-};
+}

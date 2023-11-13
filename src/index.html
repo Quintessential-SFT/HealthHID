@@ -19,10 +19,10 @@
           const getId = async () => {
             await window.HealthHid.MicrolifeBPM.getUserId(device);
           };
-          const setId = async () => {
-            const id = getInputData();
-            await window.HealthHid.MicrolifeBPM.setUserId(device, id);
-          };
+          // const setId = async () => {
+          //   const id = getInputData();
+          //   await window.HealthHid.MicrolifeBPM.setUserId(device, id);
+          // };
           const getData = async () => {
             await window.HealthHid.MicrolifeBPM.getData(device);
           };
@@ -52,9 +52,9 @@
             <button onclick="getId()">
                 Get ID
             </button>
-            <button onclick="setId()">
-                Set ID
-            </button>
+<!--            <button onclick="setId()">-->
+<!--                Set ID-->
+<!--            </button>-->
             <button onclick="getData()">
                 Get Data
             </button>
@@ -67,7 +67,7 @@
             <textarea id="output" disabled style="resize: none; height: 150px"></textarea>
         </div>
 
-        <script type="module">
+        <script>
           const healthHid = window.HealthHid;
           const handleConnectedDevice = (e) => console.log(`Device connected: ${healthHid.getDeviceHumanName(e.device)}`);
           const handleDisconnectedDevice = (e) => {
