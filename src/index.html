@@ -13,7 +13,7 @@
 
           const requestDevice = () => window.HealthHid.Device.requestDevice([
             'Microlife BPM',
-            'Microlife GlucoTeq',
+            // 'Microlife GlucoTeq',
           ])
             .then(dev => {
               device = dev;
@@ -39,11 +39,11 @@
             },
           };
 
-          const gluco = {
-            getData: async () => {
-              await window.HealthHid.MicrolifeGlucoTeq.getData(device);
-            },
-          };
+          // const gluco = {
+          //   getData: async () => {
+          //     await window.HealthHid.MicrolifeGlucoTeq.getData(device);
+          //   },
+          // };
         </script>
     </head>
     <body>
@@ -91,14 +91,14 @@
                     </button>
                 </div>
             </div>
-            <div style="margin-bottom: 0.5rem;">
-                <h3>Microlife GlucoTeq</h3>
-                <div>
-                    <button onclick="gluco.getData()">
-                        Get Data
-                    </button>
-                </div>
-            </div>
+<!--            <div style="margin-bottom: 0.5rem;">-->
+<!--                <h3>Microlife GlucoTeq</h3>-->
+<!--                <div>-->
+<!--                    <button onclick="gluco.getData()">-->
+<!--                        Get Data-->
+<!--                    </button>-->
+<!--                </div>-->
+<!--            </div>-->
         </div>
 
         <script>

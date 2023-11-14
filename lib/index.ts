@@ -1,2 +1,5 @@
 export { Device } from './hid';
-export * from './devices';
+export {
+  MicrolifeBPM,
+  // MicrolifeGlucoTeq,
+} from './devices';
