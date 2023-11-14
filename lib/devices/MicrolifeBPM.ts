@@ -7,8 +7,8 @@ export namespace MicrolifeBPM {
   const ID_LENGTH = 11;
 
   const formatWriteData = (data: number[]) => {
-    if (data.length > 7) {
-      throw new Error("Maximum write byte length (7) exceeded!");
+    if (data.length > WRITE_CHUNK_SIZE) {
+      throw new Error(`Maximum write byte length (${WRITE_CHUNK_SIZE}) exceeded!`);
     }
     return new Uint8Array([data.length, ...data]);
   };
@@ -50,20 +50,24 @@ export namespace MicrolifeBPM {
     },
   
     setUserId: async (dev: Device, userId: string, clearMemory = false) => {
-      // if (userId.length > ID_LENGTH) {
-      //   throw new Error(`Max ID length (${ID_LENGTH}) exceeded!`);
-      // }
-      // if (!/^[0-9a-zA-Z]+$/.test(userId)) {
-      //   throw new Error(`IDs can't contain non-alphanumeric chars!`);
-      // }
-      // const reqData = formatWriteData([0x12, 0x16, 0x18, 0x23]);
-      // await dev.sendReport(
-      //   REPORT_ID,
-      //   reqData,
-      //   { userId, clearMemory },
-      //   readDataChunk,
-      //   res.setUserId as unknown as ResponseHandler,
-      // );
+      if (userId.length > ID_LENGTH) {
+        throw new Error(`Max ID length (${ID_LENGTH}) exceeded!`);
+      }
+      if (!/^[0-9a-zA-Z]+$/.test(userId)) {
+        throw new Error(`IDs can't contain non-alphanumeric chars!`);
+      }
+      const reqData = formatWriteData([0x12, 0x16, 0x18, 0x23]);
+      return new Promise(async (resolve, reject) =>
+        await dev.sendReport(
+          REPORT_ID,
+          reqData,
+          { userId, clearMemory },
+          readDataChunk,
+          res.setUserId as unknown as ResponseHandler,
+          resolve,
+          reject,
+        )
+      );
     },
 
     getDeviceInfo: async () => {},
@@ -139,63 +143,43 @@ export namespace MicrolifeBPM {
     },
 
     setUserId: async (dev: Device, data: number[], writeData: { userId: string, clearMemory: boolean }) => {
-      // if (data.length !== 1 || data[0] !== 6) {
-      //   dev.clearOngoingRequest();
-      //   throw new Error(`Invalid setUserId() response: ${data}`);
-      // }
-      //
-      // const { userId, clearMemory } = writeData;
-      // const CLEAR = [0x30, 0x30, 0x30, 0x30, 0xFF, 0xFF, 0xFF, 0xFF];
-      // const NO_CLEAR = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
-      //
-      // const encodeId = (idStr: string) => {
-      //   let idBytes: number[] = new Array(ID_LENGTH * 2).fill(0);
-      //   const charStart = 'A'.charCodeAt(0);
-      //   for (let i = 0; i < idStr.length * 2; i += 2) {
-      //     const char = idStr[i / 2];
-      //     if (/^[0-9]+$/.test(char)) {
-      //       const digit = parseInt(char, 10);
-      //       idBytes[i] = parseInt('0x33', 16);
-      //       idBytes[i + 1] = parseInt(`0x${30 + digit}`, 16);
-      //     } else {
-      //       const charOffset = char.codePointAt(0)! - charStart;
-      //       idBytes[i] = parseInt('0x34', 16);
-      //       idBytes[i + 1] = parseInt(`0x${30 + charOffset + 1}`, 16);
-      //     }
-      //   }
-      //   return idBytes;
-      // };
-      //
-      // const encodedId = encodeId(userId);
-      // let arg = [...(clearMemory ? CLEAR : NO_CLEAR), ...encodedId];
-      // console.log('final arg: ', arg);
-      //
-      // // const numArg = arg.map(hex => parseInt(hex, 16));
-      // // const sum = numArg.reduce((acc, v) => acc + v, 0);
-      // // const checksum = sum % 256;
-      // // console.log('sum: ', checksum);
-      // arg = [...arg, 0x00, 0x00, 0x00, 0x00];
-      // // arg = [48, 48, 48, 49, 48, 48, 48, 49, 52, 50, 51, 50, 51, 53, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 49, 53]
-      //
-      // // let arg = new Array(32).fill(0);
-      // // arg[1] = 1;
-      // // arg[3] = 1;
-      // // const idStr = `${userId}`;
-      // // for (let i = 0; i < idStr.length; i++) {
-      // //   arg[i + 4] = idStr[i].charCodeAt(0);
-      // // }
-      //
-      // // TODO: calculate checksum
-      // // const checksum = '';
-      // // hexArg = hexArg.concat(checksum);
-      //
-      // while (!!arg.length) {
-      //   const chunk = arg.slice(0, WRITE_CHUNK_SIZE);
-      //   console.log('Write (BPM Chunk): ', arrDecToHex(chunk));
-      //   await dev.raw.sendReport(REPORT_ID, new Uint8Array(chunk)); // TEST
-      //   arg = arg.slice(chunk.length);
-      //   await new Promise(r => window.setTimeout(r, 50));
-      // }
+      if (data.length !== 1 || data[0] !== 6) {
+        dev.clearOngoingRequest();
+        throw new Error(`Invalid setUserId() response: ${data}`);
+      }
+
+      const { userId, clearMemory } = writeData;
+      const CLEAR = [0x30, 0x30, 0x30, 0x30, 0xFF, 0xFF, 0xFF, 0xFF];
+      const NO_CLEAR = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
+
+      const encodeId = (idStr: string) => {
+        let idBytes: number[] = new Array(ID_LENGTH * 2).fill(0);
+        const charStart = 'A'.charCodeAt(0);
+        for (let i = 0; i < idStr.length * 2; i += 2) {
+          const char = idStr[i / 2];
+          if (/^[0-9]+$/.test(char)) {
+            const digit = parseInt(char, 10);
+            idBytes[i] = parseInt('0x33', 16);
+            idBytes[i + 1] = parseInt(`0x${30 + digit}`, 16);
+          } else {
+            const charOffset = char.codePointAt(0)! - charStart;
+            idBytes[i] = parseInt('0x34', 16);
+            idBytes[i + 1] = parseInt(`0x${30 + charOffset + 1}`, 16);
+          }
+        }
+        return idBytes;
+      };
+
+      const encodedId = encodeId(userId);
+      let arg = [...(clearMemory ? CLEAR : NO_CLEAR), ...encodedId];
+      arg = [...arg, 0x00, 0x00, 0x00, 0x00];
+      console.log(`Write: ${arrDecToHex(arg)}`);
+      while (!!arg.length) {
+        const chunk = arg.slice(0, WRITE_CHUNK_SIZE);
+        console.log(`Write (Chunk): ${arrDecToHex(chunk)}`);
+        await dev.raw.sendReport(REPORT_ID, formatWriteData(chunk));
+        arg = arg.slice(chunk.length);
+      }
     },
 
     getDeviceInfo: async (dev: Device, data: number[]) => {},
@@ -271,7 +255,7 @@ export namespace MicrolifeBPM {
 
   export const {
     getUserId,
-    // setUserId,
+    setUserId,
     // getDeviceInfo,
     getData,
     // clearData,

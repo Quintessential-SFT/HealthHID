@@ -27,10 +27,10 @@
             getData: async () => {
               await window.HealthHid.MicrolifeBPM.getData(device);
             },
-            // setId: async () => {
-            //   const id = getInputData();
-            //   await window.HealthHid.MicrolifeBPM.setUserId(device, id);
-            // },
+            setId: async () => {
+              const id = getInputData();
+              await window.HealthHid.MicrolifeBPM.setUserId(device, id);
+            },
             getUserSlotInfo: async () => {
               await window.HealthHid.MicrolifeBPM.getUserSlotInfo(device);
             },
@@ -74,9 +74,9 @@
                     <button onclick="bpm.getId()">
                         Get ID
                     </button>
-<!--                    <button onclick="bpm.setId()">-->
-<!--                        Set ID-->
-<!--                    </button>-->
+                    <button onclick="bpm.setId()">
+                        Set ID
+                    </button>
                     <button onclick="bpm.getData()">
                         Get Data
                     </button>
