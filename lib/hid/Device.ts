@@ -91,6 +91,19 @@ export class Device {
       await this.device.close();
   };
 
+  sendFeatureReport = async (
+    reportId: number,
+    data: Uint8Array,
+  ) => {
+    return this.device.sendFeatureReport(reportId,  data);
+  };
+
+  receiveFeatureReport = async (reportId: number) => {
+    const res = await this.device.receiveFeatureReport(reportId);
+    const data = new Uint8Array(res.buffer);
+    return data;
+  };
+
   sendReport = async (
     reportId: number,
     data: Uint8Array,
