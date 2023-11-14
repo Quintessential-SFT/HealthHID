@@ -117,16 +117,23 @@ export namespace MicrolifeBPM {
     getUserId: async (dev: Device, data: number[]) => {
       data = parseReadResponse(dev, data);
       console.log(`Read: ${arrDecToHex(data)}`);
-      const decode = (data: number[]) => {
-        data = data.slice(0, -8); // rm fixed str
-        data = data.slice(0, 2 * ID_LENGTH);
+      data = data.slice(0, -8); // rm fixed str
+      data = data.slice(0, 2 * ID_LENGTH);
+
+      const decodeId = (data: number[]) => {
+        const upperCharStart = 'A'.charCodeAt(0);
+        const lowerCharStart = 'a'.charCodeAt(0);
         let id = '';
         for (let i = 0; i < data.length; i += 2) {
           let char = '';
-          if (data[i] === 0x34) {
-            char = String.fromCodePoint(data[i + 1] + 10);
-          } else if (data[i] === 0x33) {
+          if (data[i] === 0x33) {
             char = String.fromCodePoint(data[i + 1]);
+          } else if (data[i] === 0x34) {
+            const alphaOffset = parseInt(String.fromCharCode(data[i + 1]), 16) - 1;
+            char = String.fromCharCode(upperCharStart + alphaOffset);
+          } else if (data[i] === 0x36) {
+            const alphaOffset = parseInt(String.fromCharCode(data[i + 1]), 16) - 1;
+            char = String.fromCharCode(lowerCharStart + alphaOffset);
           } else {
             break;
           }
@@ -137,7 +144,7 @@ export namespace MicrolifeBPM {
         }
         return id;
       };
-      const userId = decode(data);
+      const userId = decodeId(data);
       dev.strOut(userId);
       return userId;
     },
@@ -154,17 +161,22 @@ export namespace MicrolifeBPM {
 
       const encodeId = (idStr: string) => {
         let idBytes: number[] = new Array(ID_LENGTH * 2).fill(0);
-        const charStart = 'A'.charCodeAt(0);
+        const upperCharStart = 'A'.charCodeAt(0);
+        const lowerCharStart = 'a'.charCodeAt(0);
         for (let i = 0; i < idStr.length * 2; i += 2) {
           const char = idStr[i / 2];
           if (/^[0-9]+$/.test(char)) {
             const digit = parseInt(char, 10);
-            idBytes[i] = parseInt('0x33', 16);
-            idBytes[i + 1] = parseInt(`0x${30 + digit}`, 16);
-          } else {
-            const charOffset = char.codePointAt(0)! - charStart;
-            idBytes[i] = parseInt('0x34', 16);
-            idBytes[i + 1] = parseInt(`0x${30 + charOffset + 1}`, 16);
+            idBytes[i] = 0x33;
+            idBytes[i + 1] = 0x30 + digit;
+          } else if (/^[A-Z]+$/.test(char)) {
+            const charOffset = char.codePointAt(0)! - upperCharStart;
+            idBytes[i] = 0x34;
+            idBytes[i + 1] = 0x30 + charOffset + 1;
+          } else if (/^[a-z]+$/.test(char)) {
+            const charOffset = char.codePointAt(0)! - lowerCharStart;
+            idBytes[i] = 0x36;
+            idBytes[i + 1] = 0x30 + charOffset + 1;
           }
         }
         return idBytes;
