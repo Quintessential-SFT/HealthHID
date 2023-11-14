@@ -17,7 +17,7 @@
           ])
             .then(dev => {
               device = dev;
-              dev.strOut = (data) => setOutputData(data);
+              dev.setStrOut((data) => setOutputData(data));
             });
 
           const bpm = {

@@ -34,22 +34,22 @@ export namespace MicrolifeBPM {
   };
 
   const cmd = {
-    getUserId: async (dev: Device) => {
+    getUserId: async (dev: Device, silent?: boolean) => {
       const reqData = formatWriteData([0x12, 0x16, 0x18, 0x24]);
       return new Promise(async (resolve, reject) =>
         await dev.sendReport(
           REPORT_ID,
           reqData,
-          undefined,
           readDataChunk,
           res.getUserId,
           resolve,
           reject,
+          silent,
         )
       );
     },
   
-    setUserId: async (dev: Device, userId: string, clearMemory = false) => {
+    setUserId: async (dev: Device, userId: string, clearMemory = false, silent?: boolean) => {
       if (userId.length > ID_LENGTH) {
         throw new Error(`Max ID length (${ID_LENGTH}) exceeded!`);
       }
@@ -61,60 +61,60 @@ export namespace MicrolifeBPM {
         await dev.sendReport(
           REPORT_ID,
           reqData,
-          { userId, clearMemory },
           readDataChunk,
-          res.setUserId as unknown as ResponseHandler,
+          (...args) => res.setUserId(...args, { userId, clearMemory }),
           resolve,
           reject,
+          silent,
         )
       );
     },
 
-    getDeviceInfo: async () => {},
+    getDeviceInfo: async (dev: Device, silent?: boolean) => {},
 
-    getData: async (dev: Device) => {
+    getData: async (dev: Device, silent?: boolean) => {
       const reqData = formatWriteData([0x12, 0x16, 0x18, 0x22]);
       return new Promise(async (resolve, reject) =>
         await dev.sendReport(
           REPORT_ID,
           reqData,
-          undefined,
           readDataChunk,
           res.getData as unknown as ResponseHandler,
           resolve,
           reject,
+          silent,
         )
       );
     },
   
-    clearData: async () => {},
+    clearData: async (dev: Device, silent?: boolean) => {},
 
-    getDeviceTime: async () => {},
+    getDeviceTime: async (dev: Device, silent?: boolean) => {},
   
-    setDeviceTime: async (date: Date) => {},
+    setDeviceTime: async (dev: Device, date: Date, silent?: boolean) => {},
   
-    getDeviceSerial: async () => {},
+    getDeviceSerial: async (dev: Device, silent?: boolean) => {},
   
-    getDeviceStatus: async () => {},
+    getDeviceStatus: async (dev: Device, silent?: boolean) => {},
 
-    getUserSlotInfo: async (dev: Device) => {
+    getUserSlotInfo: async (dev: Device, silent?: boolean) => {
       const reqData = formatWriteData([0x12, 0x16, 0x18, 0x28]);
       return new Promise(async (resolve, reject) =>
         await dev.sendReport(
           REPORT_ID,
           reqData,
-          undefined,
           readDataChunk,
           res.getUserSlotInfo,
           resolve,
           reject,
+          silent,
         )
       );
     },
   };
 
   const res = {
-    getUserId: async (dev: Device, data: number[]) => {
+    getUserId: async (dev: Device, data: number[], silent: boolean) => {
       data = parseReadResponse(dev, data);
       console.log(`Read: ${arrDecToHex(data)}`);
       data = data.slice(0, -8); // rm fixed str
@@ -145,11 +145,11 @@ export namespace MicrolifeBPM {
         return id;
       };
       const userId = decodeId(data);
-      dev.strOut(userId);
+      dev.strOut(userId, silent);
       return userId;
     },
 
-    setUserId: async (dev: Device, data: number[], writeData: { userId: string, clearMemory: boolean }) => {
+    setUserId: async (dev: Device, data: number[], silent: boolean, writeData: { userId: string, clearMemory: boolean }) => {
       if (data.length !== 1 || data[0] !== 6) {
         dev.clearOngoingRequest();
         throw new Error(`Invalid setUserId() response: ${data}`);
@@ -194,9 +194,9 @@ export namespace MicrolifeBPM {
       }
     },
 
-    getDeviceInfo: async (dev: Device, data: number[]) => {},
+    getDeviceInfo: async (dev: Device, data: number[], silent: boolean) => {},
 
-    getData: async (dev: Device, data: number[]) => {
+    getData: async (dev: Device, data: number[], silent: boolean) => {
       data = parseReadResponse(dev, data);
       const getCycles = (data: number[]) => {
         const digits = data.slice(0, 4);
@@ -241,26 +241,26 @@ export namespace MicrolifeBPM {
 
       console.log('Pressure Data: ', readings);
       const formattedReadings = readings.map(r => `${r.date}: sys=${r.systolicPressure}, dia=${r.diastolicPressure}, pulse=${r.pulse}`).join('\n');
-      dev.strOut(formattedReadings);
+      dev.strOut(formattedReadings, silent);
       return readings;
     },
 
-    clearData: async (dev: Device, data: number[]) => {},
+    clearData: async (dev: Device, data: number[], silent: boolean) => {},
 
-    getDeviceTime: async (dev: Device, data: number[]) => {},
+    getDeviceTime: async (dev: Device, data: number[], silent: boolean) => {},
 
-    setDeviceTime: async (dev: Device, data: number[]) => {},
+    setDeviceTime: async (dev: Device, data: number[], silent: boolean) => {},
 
-    getDeviceSerial: async (dev: Device, data: number[]) => {},
+    getDeviceSerial: async (dev: Device, data: number[], silent: boolean) => {},
 
-    getDeviceStatus: async (dev: Device, data: number[]) => {},
+    getDeviceStatus: async (dev: Device, data: number[], silent: boolean) => {},
 
-    getUserSlotInfo: async (dev: Device, data: number[]) => {
+    getUserSlotInfo: async (dev: Device, data: number[], silent: boolean) => {
       data = parseReadResponse(dev, data);
       console.log(`Read: ${arrDecToHex(data)}`);
       const totalSlots = parseInt(String.fromCharCode(data[4]), 10);
       const currentSlot = parseInt(String.fromCharCode(data[5]), 10);
-      dev.strOut(`Total User Slots: ${totalSlots}\nCurrent User Slot: ${currentSlot}`);
+      dev.strOut(`Total User Slots: ${totalSlots}\nCurrent User Slot: ${currentSlot}`, silent);
       return { totalSlots, currentSlot };
     },
   };

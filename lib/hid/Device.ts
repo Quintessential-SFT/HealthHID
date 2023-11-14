@@ -1,4 +1,4 @@
-import { WriteData, ReadDataChunk, ResponseHandler, OngoingRequest, SupportedDevice } from "./types";
+import { ReadDataChunk, ResponseHandler, OngoingRequest, SupportedDevice } from "./types";
 import { arrDecToHex, CmdReject, CmdResolve, MapValueType } from "../utils";
 
 const MAX_RETRIES = 15;
@@ -34,13 +34,13 @@ export class Device {
           if (!this.ongoingRequest) return;
           this.ongoingRequest!.isReading = false;
           const data = this.ongoingRequest.readData;
-          const writeData = this.ongoingRequest.writeData;
           const resHandler = this.ongoingRequest.resHandler; // TODO: retries
           const resolve = this.ongoingRequest.resolve;
           const reject = this.ongoingRequest.reject;
-            this.clearOngoingRequest();
+          const silent = this.ongoingRequest.silent;
+          this.clearOngoingRequest();
           try {
-            const res = await resHandler(this, data, writeData);
+            const res = await resHandler(this, data, silent);
             resolve(res);
           } catch (err) {
             reject(err);
@@ -81,9 +81,13 @@ export class Device {
 
   get raw() { return this.device; }
 
-  get strOut() { return this._strOut; }
+  strOut = (data: string, silent = false) => {
+    if (!silent) {
+      this._strOut(data);
+    }
+  }
 
-  set strOut(handler: (data: string) => void) {
+  setStrOut = (handler: (data: string) => void) => {
     this._strOut = handler;
   }
 
@@ -107,11 +111,11 @@ export class Device {
   sendReport = async (
     reportId: number,
     data: Uint8Array,
-    writeData: WriteData | undefined,
     readDataChunk: ReadDataChunk,
     resHandler: ResponseHandler,
     resolve: CmdResolve,
     reject: CmdReject,
+    silent = false,
   ) => {
     if (!this.device) {
       window.alert('No device selected...');
@@ -125,11 +129,11 @@ export class Device {
       retriesLeft: MAX_RETRIES,
       readDataChunk,
       readData: [],
-      writeData,
       resHandler,
       retry: async () => {},
       resolve,
       reject,
+      silent,
     };
     console.log(`Write: ${arrDecToHex(data)}`);
     const _sendReport = async () => {

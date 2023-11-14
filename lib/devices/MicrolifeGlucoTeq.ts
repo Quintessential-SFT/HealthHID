@@ -21,7 +21,6 @@ export namespace MicrolifeGlucoTeq {
         await dev.sendReport(
           REPORT_ID,
           reqData,
-          undefined,
           readDataChunk,
           res.getData as unknown as ResponseHandler,
           resolve,
@@ -32,7 +31,7 @@ export namespace MicrolifeGlucoTeq {
   };
 
   const res = {
-    getData: async (dev: Device, data: number[]) => {
+    getData: async (dev: Device, data: number[], silent: boolean) => {
       // TODO
       dev.strOut("Dummy Data");
     },
