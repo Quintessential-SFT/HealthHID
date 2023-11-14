@@ -36,7 +36,7 @@ export namespace MicrolifeBPM {
   const cmd = {
     getUserId: async (dev: Device, silent?: boolean) => {
       const reqData = formatWriteData([0x12, 0x16, 0x18, 0x24]);
-      return new Promise(async (resolve, reject) =>
+      return new Promise<string>(async (resolve, reject) =>
         await dev.sendReport(
           REPORT_ID,
           reqData,
@@ -74,7 +74,12 @@ export namespace MicrolifeBPM {
 
     getData: async (dev: Device, silent?: boolean) => {
       const reqData = formatWriteData([0x12, 0x16, 0x18, 0x22]);
-      return new Promise(async (resolve, reject) =>
+      return new Promise<{
+        date: string,
+        systolicPressure: number,
+        diastolicPressure: number,
+        pulse: number,
+      }[]>(async (resolve, reject) =>
         await dev.sendReport(
           REPORT_ID,
           reqData,
@@ -86,8 +91,11 @@ export namespace MicrolifeBPM {
         )
       );
     },
-  
-    clearData: async (dev: Device, silent?: boolean) => {},
+
+    clearData: async (dev: Device, silent?: boolean) => {
+      const currentUserId = await cmd.getUserId(dev, true);
+      await cmd.setUserId(dev, currentUserId, true, true);
+    },
 
     getDeviceTime: async (dev: Device, silent?: boolean) => {},
   
@@ -99,7 +107,7 @@ export namespace MicrolifeBPM {
 
     getUserSlotInfo: async (dev: Device, silent?: boolean) => {
       const reqData = formatWriteData([0x12, 0x16, 0x18, 0x28]);
-      return new Promise(async (resolve, reject) =>
+      return new Promise<{ totalSlots: number, currentSlot: number }>(async (resolve, reject) =>
         await dev.sendReport(
           REPORT_ID,
           reqData,
@@ -245,8 +253,6 @@ export namespace MicrolifeBPM {
       return readings;
     },
 
-    clearData: async (dev: Device, data: number[], silent: boolean) => {},
-
     getDeviceTime: async (dev: Device, data: number[], silent: boolean) => {},
 
     setDeviceTime: async (dev: Device, data: number[], silent: boolean) => {},
@@ -270,7 +276,7 @@ export namespace MicrolifeBPM {
     setUserId,
     // getDeviceInfo,
     getData,
-    // clearData,
+    clearData,
     // getDeviceTime,
     // setDeviceTime,
     // getDeviceSerial,

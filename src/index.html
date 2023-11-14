@@ -34,6 +34,9 @@
             getUserSlotInfo: async () => {
               await window.HealthHid.MicrolifeBPM.getUserSlotInfo(device);
             },
+            clearData: async () => {
+              await window.HealthHid.MicrolifeBPM.clearData(device);
+            },
           };
 
           const gluco = {
@@ -82,6 +85,9 @@
                     </button>
                     <button onclick="bpm.getUserSlotInfo()">
                         Get User Slot Info
+                    </button>
+                    <button onclick="bpm.clearData()">
+                        Clear Data
                     </button>
                 </div>
             </div>
