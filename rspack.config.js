@@ -8,6 +8,13 @@ const prodPlugins = [
   }),
 ];
 
+const devPlugins = [
+  new rspack.HtmlRspackPlugin({
+    // Only include demo dashboard in dev mode
+    template: './src/index.html',
+  }),
+];
+
 module.exports = (env, exports) => {
   const production = env.production;
   return {
@@ -26,10 +33,7 @@ module.exports = (env, exports) => {
       },
     },
     plugins: [
-      new rspack.HtmlRspackPlugin({
-        template: './src/index.html',
-      }),
-      ...(production ? prodPlugins : []),
+      ...(production ? prodPlugins : devPlugins),
     ],
   };
 };

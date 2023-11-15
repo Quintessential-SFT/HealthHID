@@ -23,7 +23,10 @@ console.log(userId);
 
 ### Demo Dashboard:
 ``` bash
-npm run serve
+git clone git@github.com:Quintessential-SFT/HealthHID.git
+cd HealthHID
+npm ci
+npm run dev
 
 # Navigate to http://localhost:8080
 ```
