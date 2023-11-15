@@ -1,4 +1,4 @@
-import { Device, ResponseHandler } from '../hid';
+import { Device } from '../hid';
 
 export namespace MicrolifeGlucoTeq {
   const REPORT_ID = 0x00;
@@ -22,7 +22,7 @@ export namespace MicrolifeGlucoTeq {
           REPORT_ID,
           reqData,
           readDataChunk,
-          res.getData as unknown as ResponseHandler,
+          res.getData,
           resolve,
           reject,
         )

@@ -1,4 +1,4 @@
-import { Device, ResponseHandler } from '../hid';
+import { Device } from '../hid';
 import { arrDecToHex } from "../utils";
 
 export namespace MicrolifeBPM {
@@ -84,7 +84,7 @@ export namespace MicrolifeBPM {
           REPORT_ID,
           reqData,
           readDataChunk,
-          res.getData as unknown as ResponseHandler,
+          res.getData,
           resolve,
           reject,
           silent,
