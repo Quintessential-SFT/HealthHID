@@ -174,7 +174,7 @@ export namespace MicrolifeBPM {
         for (let i = 0; i < idStr.length * 2; i += 2) {
           const char = idStr[i / 2];
           if (/^[0-9]+$/.test(char)) {
-            const digit = parseInt(char, 10);
+            const digit = parseInt(char, 16);
             idBytes[i] = 0x33;
             idBytes[i + 1] = 0x30 + digit;
           } else if (/^[A-Z]+$/.test(char)) {
@@ -209,7 +209,7 @@ export namespace MicrolifeBPM {
       const getCycles = (data: number[]) => {
         const digits = data.slice(0, 4);
         const cyclesStr = digits.map(digit => String.fromCharCode(digit)).join("");
-        return parseInt(cyclesStr, 10);
+        return parseInt(cyclesStr, 16);
       };
       const cycles = getCycles(data);
 
@@ -264,8 +264,8 @@ export namespace MicrolifeBPM {
     getUserSlotInfo: async (dev: Device, data: number[], silent: boolean) => {
       data = parseReadResponse(dev, data);
       console.log(`Read: ${arrDecToHex(data)}`);
-      const totalSlots = parseInt(String.fromCharCode(data[4]), 10);
-      const currentSlot = parseInt(String.fromCharCode(data[5]), 10);
+      const totalSlots = parseInt(String.fromCharCode(data[4]), 16);
+      const currentSlot = parseInt(String.fromCharCode(data[5]), 16);
       dev.strOut(`Total User Slots: ${totalSlots}\nCurrent User Slot: ${currentSlot}`, silent);
       return { totalSlots, currentSlot };
     },
