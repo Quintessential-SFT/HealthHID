@@ -251,6 +251,9 @@ export namespace MicrolifeBPM {
           const [y3, y4, m1, m2, d1, d2, h1, h2, min1, min2] = record.slice(0, 10).map(b => String.fromCodePoint(b));
           // TODO: timezone support
           dt = new Date(`20${y3}${y4}-${m1}${m2}-${d1}${d2}T${h1}${h2}:${min1}${min2}`);
+          if (isNaN(dt.getTime())) {
+            continue; // Ignore readings with invalid dates
+          }
         } catch {
           continue;
         }
