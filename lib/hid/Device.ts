@@ -6,7 +6,7 @@ const RETRY_INTERVAL_MS = 100;
 
 const supportedDevices: Map<SupportedDevice, { vendorId: number, productId: number }> = new Map([
   ['Microlife BPM', { vendorId: 0x4b4, productId: 0x5500 }],
-  ['Microlife GlucoTeq', { vendorId: 0x04D9, productId: 0xB564 }],
+  // ['Microlife GlucoTeq', { vendorId: 0x04D9, productId: 0xB564 }],
 ]);
 
 export const getDeviceHumanName = (dev: MapValueType<typeof supportedDevices>) => Array.from(supportedDevices.entries())
@@ -70,7 +70,7 @@ export class Device {
         }
         filters.push(descriptor);
       });
-    };
+    }
     const devices = await navigator.hid.requestDevice({ filters });
     if (devices.length < 1) return;
     const device = devices[0]; // grab first interface
