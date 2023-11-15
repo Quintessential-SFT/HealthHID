@@ -33,6 +33,10 @@ export namespace MicrolifeBPM {
     return data.slice(1, -2);
   };
 
+  const encodeDigit = (digit: number) => 0x30 + digit;
+
+  const encodeDigitStr = (digits: string) => Array.from(digits).map(d => encodeDigit(parseInt(d, 10)));
+
   const cmd = {
     getUserId: async (dev: Device, silent?: boolean) => {
       const reqData = formatWriteData([0x12, 0x16, 0x18, 0x24]);
@@ -97,9 +101,22 @@ export namespace MicrolifeBPM {
       await cmd.setUserId(dev, currentUserId, true, true);
     },
 
-    getDeviceTime: async (dev: Device, silent?: boolean) => {},
+    getDateTime: async (dev: Device, silent?: boolean) => {},
   
-    setDeviceTime: async (dev: Device, date: Date, silent?: boolean) => {},
+    setDateTime: async (dev: Device, date: Date, silent?: boolean) => {
+      const reqData = formatWriteData([0x12, 0x16, 0x18, 0x27]);
+      return new Promise(async (resolve, reject) =>
+        await dev.sendReport(
+          REPORT_ID,
+          reqData,
+          readDataChunk,
+          (...args) => res.setDateTime(...args, { date }),
+          resolve,
+          reject,
+          silent,
+        )
+      );
+    },
   
     getDeviceSerial: async (dev: Device, silent?: boolean) => {},
   
@@ -157,7 +174,12 @@ export namespace MicrolifeBPM {
       return userId;
     },
 
-    setUserId: async (dev: Device, data: number[], silent: boolean, writeData: { userId: string, clearMemory: boolean }) => {
+    setUserId: async (
+      dev: Device,
+      data: number[],
+      silent: boolean,
+      writeData: { userId: string, clearMemory: boolean },
+    ) => {
       if (data.length !== 1 || data[0] !== 6) {
         dev.clearOngoingRequest();
         throw new Error(`Invalid setUserId() response: ${data}`);
@@ -176,15 +198,15 @@ export namespace MicrolifeBPM {
           if (/^[0-9]+$/.test(char)) {
             const digit = parseInt(char, 16);
             idBytes[i] = 0x33;
-            idBytes[i + 1] = 0x30 + digit;
+            idBytes[i + 1] = encodeDigit(digit);
           } else if (/^[A-Z]+$/.test(char)) {
             const charOffset = char.codePointAt(0)! - upperCharStart;
             idBytes[i] = 0x34;
-            idBytes[i + 1] = 0x30 + charOffset + 1;
+            idBytes[i + 1] = encodeDigit(charOffset + 1);
           } else if (/^[a-z]+$/.test(char)) {
             const charOffset = char.codePointAt(0)! - lowerCharStart;
             idBytes[i] = 0x36;
-            idBytes[i + 1] = 0x30 + charOffset + 1;
+            idBytes[i + 1] = encodeDigit(charOffset + 1);
           }
         }
         return idBytes;
@@ -253,9 +275,40 @@ export namespace MicrolifeBPM {
       return readings;
     },
 
-    getDeviceTime: async (dev: Device, data: number[], silent: boolean) => {},
+    getDateTime: async (dev: Device, data: number[], silent: boolean) => {},
 
-    setDeviceTime: async (dev: Device, data: number[], silent: boolean) => {},
+    setDateTime: async (
+      dev: Device,
+      data: number[],
+      silent: boolean,
+      writeData: { date: Date },
+    ) => {
+      if (data.length !== 1 || data[0] !== 6) {
+        dev.clearOngoingRequest();
+        throw new Error(`Invalid setDateTime() response: ${data}`);
+      }
+
+      const encodeDateTime = (date: Date) => {
+        const month = encodeDigitStr((date.getMonth() + 1).toString().padStart(2, '0'));
+        const day = encodeDigitStr(date.getDate().toString().padStart(2, '0'));
+        const year = encodeDigitStr((date.getFullYear() % 100).toString().padStart(2, '0'));
+        const hour = encodeDigitStr(date.getHours().toString().padStart(2, '0'));
+        const min = encodeDigitStr(date.getMinutes().toString().padStart(2, '0'));
+        const sec = encodeDigitStr(date.getSeconds().toString().padStart(2, '0'));
+        return [...month, ...day, ...year, 0x32, 0x30, ...hour, ...min, ...sec];
+      }
+
+      const { date } = writeData;
+      const encodedDateTime = encodeDateTime(date);
+      let arg = [...encodedDateTime, 0, 0]; // doesn't seem to work w/o padding
+      console.log(`Write: ${arrDecToHex(arg)}`);
+      while (!!arg.length) {
+        const chunk = arg.slice(0, WRITE_CHUNK_SIZE);
+        console.log(`Write (Chunk): ${arrDecToHex(chunk)}`);
+        await dev.raw.sendReport(REPORT_ID, formatWriteData(chunk));
+        arg = arg.slice(chunk.length);
+      }
+    },
 
     getDeviceSerial: async (dev: Device, data: number[], silent: boolean) => {},
 
@@ -277,8 +330,8 @@ export namespace MicrolifeBPM {
     // getDeviceInfo,
     getData,
     clearData,
-    // getDeviceTime,
-    // setDeviceTime,
+    // getDateTime,
+    setDateTime,
     // getDeviceSerial,
     // getDeviceStatus,
     getUserSlotInfo,

@@ -37,6 +37,10 @@
             clearData: async () => {
               await window.HealthHid.MicrolifeBPM.clearData(device);
             },
+            setDateTime: async () => {
+              const date = new Date();
+              await window.HealthHid.MicrolifeBPM.setDateTime(device, date);
+            },
           };
 
           // const gluco = {
@@ -88,6 +92,9 @@
                     </button>
                     <button onclick="bpm.clearData()">
                         Clear Data
+                    </button>
+                    <button onclick="bpm.setDateTime()">
+                        Set Date
                     </button>
                 </div>
             </div>
