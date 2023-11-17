@@ -5,8 +5,8 @@ const MAX_RETRIES = 15;
 const RETRY_INTERVAL_MS = 100;
 
 const supportedDevices: Map<SupportedDevice, { vendorId: number, productId: number }> = new Map([
-  ['Microlife BPM', { vendorId: 0x4b4, productId: 0x5500 }],
-  ['Microlife GlucoTeq', { vendorId: 0x04d9, productId: 0xb564 }],
+  ['Microlife BPM', { vendorId: 0x4B4, productId: 0x5500 }],
+  ['Microlife GlucoTeq', { vendorId: 0x04D9, productId: 0xB564 }],
 ]);
 
 export const getDeviceHumanName = (dev: MapValueType<typeof supportedDevices>) => Array.from(supportedDevices.entries())

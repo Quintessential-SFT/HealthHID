@@ -1,6 +1,6 @@
 {
   "name": "@quintessential/health-hid",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "A library for interacting with medical devices over WebHID.",
   "author": "Quintessential SFT",
   "license": "MIT",

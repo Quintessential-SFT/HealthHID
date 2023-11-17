@@ -32,7 +32,19 @@ npm run dev
 ```
 
 ### Supported Devices:
-- Microlife Blood Pressure Monitors (BPA-100-compatible)
+
+Blood Pressure Monitors:
+| Manufacturer | Device | Vendor ID | Product ID | Namespace |
+| ------------ | ------ | --------- | ---------- | --------- |
+| Microlife    | * | 0x4B4 | 0x5500 | MicrolifeBPM |
+
+(*) Most Microlife BPM devices utilize the implemented BPA-100 protocol.
+
+Blood Glucose Monitors:
+| Manufacturer | Device   | Vendor ID | Product ID | Namespace |
+| ------------ | -------- | --------- | ---------- | --------- |
+| Microlife    | GlucoTeq | 0x04D9    | 0xB564     | MicrolifeGlucoTeq |
+| OkBiotech    | OkMeter  | 0x04D9    | 0xB564     | MicrolifeGlucoTeq |
 
 ### Limitations:
 [WebHID is currently only supported on Chromium* desktop browsers.](https://caniuse.com/webhid)
