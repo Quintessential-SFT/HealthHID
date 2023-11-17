@@ -21,5 +21,5 @@ export type OngoingRequest = {
 
 export type SupportedDevice =
   | 'Microlife BPM'
-  // | 'Microlife GlucoTeq'
+  | 'Microlife GlucoTeq'
 ;

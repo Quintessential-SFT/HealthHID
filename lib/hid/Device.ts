@@ -6,7 +6,7 @@ const RETRY_INTERVAL_MS = 100;
 
 const supportedDevices: Map<SupportedDevice, { vendorId: number, productId: number }> = new Map([
   ['Microlife BPM', { vendorId: 0x4b4, productId: 0x5500 }],
-  // ['Microlife GlucoTeq', { vendorId: 0x04D9, productId: 0xB564 }],
+  ['Microlife GlucoTeq', { vendorId: 0x04d9, productId: 0xb564 }],
 ]);
 
 export const getDeviceHumanName = (dev: MapValueType<typeof supportedDevices>) => Array.from(supportedDevices.entries())
@@ -104,8 +104,7 @@ export class Device {
 
   receiveFeatureReport = async (reportId: number) => {
     const res = await this.device.receiveFeatureReport(reportId);
-    const data = new Uint8Array(res.buffer);
-    return data;
+    return new Uint8Array(res.buffer);
   };
 
   sendReport = async (

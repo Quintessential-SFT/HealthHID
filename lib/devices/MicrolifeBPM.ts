@@ -246,13 +246,13 @@ export namespace MicrolifeBPM {
       }[] = [];
       for (let offset = FIRST_RECORD; offset < FIRST_RECORD + cycles * RECORD_LENGTH; offset += RECORD_LENGTH) {
         const record = data.slice(offset, offset + RECORD_LENGTH);
-        let dt;
+        let dt: Date;
         try {
           const [y3, y4, m1, m2, d1, d2, h1, h2, min1, min2] = record.slice(0, 10).map(b => String.fromCodePoint(b));
           // TODO: timezone support
           dt = new Date(`20${y3}${y4}-${m1}${m2}-${d1}${d2}T${h1}${h2}:${min1}${min2}`);
           if (isNaN(dt.getTime())) {
-            continue; // Ignore readings with invalid dates
+            continue; // ignore readings with invalid dates
           }
         } catch {
           continue;
@@ -264,7 +264,7 @@ export namespace MicrolifeBPM {
         const diastolicPressure = dia1 * 64 + dia2 * 4 + dia3 / 4;
         const systolicPressure = parseInt('0x' + readingsData.slice(5, 7).join(''), 16);
 
-        readings = readings.concat({
+        readings.push({
           date: dt.toISOString(),
           systolicPressure,
           diastolicPressure,

@@ -1,5 +1,5 @@
 export { Device } from './hid';
 export {
   MicrolifeBPM,
-  // MicrolifeGlucoTeq,
+  MicrolifeGlucoTeq,
 } from './devices';
